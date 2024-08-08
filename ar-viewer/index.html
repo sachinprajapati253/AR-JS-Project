@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AR Product Viewer</title>
+    <style>
+        body {
+            margin: 0;
+        }
+
+        #ar-container {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+    </style>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.rawgit.com/AR-js-org/AR.js/3.0.0/aframe/build/aframe-ar.js"></script>
+</head>
+
+<body>
+    <div id="ar-container"></div>
+    <a-box color="tomato" depth="2" height="4" width="2"></a-box>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Set up A-Frame scene
+            const scene = document.createElement("a-scene");
+            scene.setAttribute("embedded", "");
+            scene.setAttribute("vr-mode-ui", "enabled: false");
+            scene.setAttribute(
+                "arjs",
+                "trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
+            );
+
+            // Add a plane to detect the surface
+            const ground = document.createElement("a-entity");
+            ground.setAttribute(
+                "geometry",
+                "primitive: plane; width: 5000; height: 5000;"
+            );
+            ground.setAttribute("material", "shader: flat; opacity: 0.5;");
+            ground.setAttribute("rotation", "-90 0 0");
+            ground.setAttribute("arjs-hit-test", ""); // Enable hit testing
+
+            // Add 3D model
+            const model = document.createElement("a-entity");
+            model.setAttribute(
+                "gltf-model",
+                "url(https://threejs.org/examples/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf)"
+            ); // Path to your live 3D model
+            model.setAttribute("scale", "0.5 0.5 0.5");
+            model.setAttribute("position", "0 0 0");
+            model.setAttribute("visible", "false"); // Initially hide the model
+
+            ground.appendChild(model);
+            scene.appendChild(ground);
+
+            // Add camera with adjusted FOV directly in HTML
+            const camera = document.createElement("a-entity");
+            camera.setAttribute("camera", "active: true; fov: 80;"); // Adjust the field of view
+            scene.appendChild(camera);
+
+            // Append scene to AR container
+            document.getElementById("ar-container").appendChild(scene);
+
+            // Handle hit testing
+            scene.addEventListener("ar-hit-test-select", (event) => {
+                const hits = event.detail.intersected;
+                if (hits.length > 0) {
+                    const hit = hits[0];
+                    model.setAttribute("position", hit.point);
+                    model.setAttribute("visible", "true");
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
