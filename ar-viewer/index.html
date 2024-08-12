@@ -4,54 +4,33 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Surface Detection AR</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <title>AR without Markers</title>
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 
 <body style="margin: 0; overflow: hidden">
-    <a-scene embedded arjs="sourceType: webcam; detectionMode: mono; matrixCodeType: 3x3; debugUIEnabled: false">
+    <a-scene embedded arjs="sourceType: webcam; detectionMode: mono; debugUIEnabled: false">
         <!-- Camera -->
-        <a-camera position="0 0 0" gps-camera="minDistance: 0.1; maxDistance: 10;"></a-camera>
+        <a-entity camera gps-camera="minDistance: 0.1; maxDistance: 10;"></a-entity>
 
-        <!-- Surface Detection -->
-        <a-entity id="surface" surface="color: red; width: 1; height: 1;" position="0 0 0" visible="false">
-            <!-- Content -->
-            <a-box position="0 0.5 0" rotation="0 45 0" color="#4CC3D9" scale="1 1 1" visible="false"></a-box>
-            <a-sphere position="0 1.25 0" radius="0.5" color="#EF2D5E" visible="false"></a-sphere>
-            <a-cylinder position="0 0.75 0" radius="0.5" height="1.5" color="#FFC65D" visible="false"></a-cylinder>
+        <!-- Entities placed based on GPS coordinates -->
+        <a-entity gps-entity-place="latitude:12.936458687921535;longitude:77.62481717765574;" position="0 0 0">
+            <!-- 3D Objects using Three.js -->
+            <a-box position="0 0.5 0" rotation="0 45 0" color="#4CC3D9"></a-box>
+            <a-sphere position="0 1.25 0" radius="0.5" color="#EF2D5E"></a-sphere>
+            <a-cylinder position="0 0.75 0" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
         </a-entity>
+
+        <!-- Optional: Add more content here -->
     </a-scene>
 
     <script>
-        // Function to detect surfaces
-        function detectSurface() {
-            const surfaceEntity = document.querySelector("#surface");
-            const box = document.querySelector("a-box");
-            const sphere = document.querySelector("a-sphere");
-            const cylinder = document.querySelector("a-cylinder");
-
-            surfaceEntity.addEventListener("surfaceDetected", () => {
-                surfaceEntity.setAttribute("visible", true);
-                box.setAttribute("visible", true);
-                sphere.setAttribute("visible", true);
-                cylinder.setAttribute("visible", true);
-                alert("Surface detected");
-            });
-
-            surfaceEntity.addEventListener("surfaceLost", () => {
-                surfaceEntity.setAttribute("visible", false);
-                box.setAttribute("visible", false);
-                sphere.setAttribute("visible", false);
-                cylinder.setAttribute("visible", false);
-                alert("surface lost");
-            });
-        }
-
-        window.onload = () => {
-            detectSurface();
-        };
+        // Optionally, you can add custom Three.js code or event listeners here.
+        document.addEventListener('DOMContentLoaded', () => {
+            // Additional Three.js setup if needed
+        });
     </script>
 </body>
 
