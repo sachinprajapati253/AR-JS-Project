@@ -16,85 +16,55 @@
 </head>
 
 <body style="margin: 0; overflow: hidden">
-    <a-scene cursor="rayOrigin: mouse; fuse: true; fuseTimeout: 0;" raycaster="objects: [gps-projected-entity-place];"
+    <a-scene cursor="rayOrigin: mouse; fuse: true; fuseTimeout: 0;" raycaster="objects: [gps-entity-place];"
         vr-mode-ui="enabled: false" embedded arjs="sourceType: webcam; debugUIEnabled: false" htmlembed>
-        <a-camera gps-camera="minDistance: 20;" rotation-reader></a-camera>
+        <a-camera gps-camera="minDistance: 1; maxDistance: 10000;" rotation-reader></a-camera>
     </a-scene>
     <script>
-        // Getting places from APIs
+        // Sample store data
         const allStore = {
             "1": {
                 "strategy": "1",
-                "storename": "T2 - Fitzroy",
-                "address": "340 Brunswick St  Fitzroy VIC 3065 AU",
-                "lat": "-37.7971222",
-                "lon": "144.978804"
+                "storename": "Popeyes",
+                "address": "Lulu Mall, R04, Second Floor Global Malls, Gopalpura, Bengaluru, Karnataka 560023",
+                "phone": "1800 309 1234",
+                "lat": "12.98166282",
+                "lon": "77.56365007"
             },
             "2": {
                 "strategy": "2",
-                "storename": "T2 - Melbourne Central",
-                "address": "Shop GD 049, Melbourne Central 300 Lonsdale St Melbourne VIC 3000 AU",
-                "lat": "-37.8110885",
-                "lon": "144.963389"
+                "storename": "Popeyes",
+                "address": "Chandra Layout, Ground Floor - 99, 60 Feet Road, Chandra Layout Main Rd, Govindaraja Nagar Ward, Bengaluru, Karnataka 560040",
+                "phone": "1800 309 1234",
+                "lat": "12.96111919",
+                "lon": "77.52759274"
             },
             "3": {
                 "strategy": "3",
-                "storename": "T2 - Highpoint",
-                "address": "Shop L02 2064a, Highpoint 200 Rosamond Rd Maribrynong VIC 3032 AU",
-                "lat": "-37.7726211",
-                "lon": "144.8890687"
+                "storename": "Popeyes",
+                "address": "Ground and First Floor, 333, 3rd Stage 4th Block, Basaveshwar Nagar, Bengaluru, Karnataka 560079",
+                "phone": "1800 309 1234",
+                "lat": "12.99287476",
+                "lon": "77.53865876"
             },
             "4": {
                 "strategy": "4",
-                "storename": "T2 - 269 Little Collins",
-                "address": "269 Little Collins St  Melbourne VIC 3000 AU",
-                "lat": "-37.8161376",
-                "lon": "144.961219"
+                "storename": "Popeyes",
+                "address": "Ground Floor, 367, 80 Feet Rd, Judges Colony, AK Colony, RT Nagar, Bengaluru, Karnataka 560032",
+                "phone": "1800 309 1234",
+                "lat": "13.02398382",
+                "lon": "77.59262947"
             },
             "5": {
                 "strategy": "5",
-                "storename": "T2 - Camberwell",
-                "address": "596 Burke Rd  Camberwell VIC 3124 AU",
-                "lat": "-37.830232",
-                "lon": "145.0570221"
-            },
-            "6": {
-                "strategy": "6",
-                "storename": "T2 - Emporium",
-                "address": "Shop 1-030, Emporium 287 Lonsdale St Melbourne VIC 3000 AU",
-                "lat": "-37.8117317",
-                "lon": "144.9635419"
-            },
-            "7": {
-                "strategy": "7",
-                "storename": "T2 - Geelong",
-                "address": "Shop 103a, Westfield Geelong 95 Malop St Geelong VIC 3220 AU",
-                "lat": "-38.1474326",
-                "lon": "144.3622374"
-            },
-            "8": {
-                "strategy": "8",
-                "storename": "T2 - Chadstone",
-                "address": "Shop 140B, Chadstone 1341 Dandenong Rd Chadstone VIC 3148 AU",
-                "lat": "-37.8865831",
-                "lon": "145.0824121"
-            },
-            "9": {
-                "strategy": "9",
-                "storename": "T2 - The Glen",
-                "address": "Unit G-072 The Glen Shopping Centre  Springvale Road 3150 Glen Waverley  VIC 3150 AU",
-                "lat": "-37.8762186",
-                "lon": "145.1652513"
-            },
-            "10": {
-                "strategy": "10",
-                "storename": "T2 - Doncaster",
-                "address": "Shop 1134, Westfield Doncaster 619 Doncaster Rd Doncaster VIC 3108 AU",
-                "lat": "-37.7854967",
-                "lon": "145.1261628"
-            },
-        }
-        console.log(allStore);
+                "storename": "Popeyes",
+                "address": "Municipal Corporation No 10, PID No 100-731-10, KC Tower ITI & HB Society, New BEL Rd, Bengaluru, Karnataka 560054",
+                "phone": "1800 309 1234",
+                "lat": "13.03284068",
+                "lon": "77.56967718"
+            }
+        };
+
 
         window.onload = () => {
             const scene = document.querySelector("a-scene");
@@ -104,19 +74,14 @@
                 const latitude = store.lat;
                 const longitude = store.lon;
 
-                // Create an entity for the plane and text
+                // Create an entity for the GPS place
                 const placeEntity = document.createElement("a-entity");
-                placeEntity.setAttribute(
-                    "gps-entity-place",
-                    `latitude: ${latitude}; longitude: ${longitude};`
-                );
+                placeEntity.setAttribute("gps-entity-place", `latitude: ${latitude}; longitude: ${longitude};`);
 
                 // Create plane entity
                 const placePlane = document.createElement("a-plane");
                 placePlane.setAttribute("width", "7");
                 placePlane.setAttribute("height", "3");
-                placePlane.setAttribute("position", "0 0 0");
-                placePlane.setAttribute("rotation", "0 0 0");
                 placePlane.setAttribute("color", "#4CC3D9");
                 placePlane.setAttribute("scale", "10 10 10");
 
@@ -136,10 +101,8 @@
 
                 // Append entity to scene
                 scene.appendChild(placeEntity);
-
             }
         };
-
     </script>
 </body>
 
