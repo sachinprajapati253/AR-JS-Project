@@ -1,0 +1,57 @@
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+</head>
+
+<body>
+    <!-- A very typical use case. Detect a single image target and show some 3D objects on top. -->
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB"
+        renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false"
+        device-orientation-permission-ui="enabled: false">
+        <!-- Adding Assets -->
+        <a-assets>
+            <img id="paintandquest-preview" src="./play.png" />
+            <video id="arvideo-link" src="./video.mp4" autoplay="false" loop="true" muted></video>
+        </a-assets>
+
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+        <!-- Binding Assets to A entity will show top of the target Image -->
+        <a-entity id="mytarget" mytarget mindar-image-target="targetIndex: 0">
+            <a-video src="#arvideo-link" webkit-playsinline playsinline width="1" height="0.552"
+                position="0 0 0"></a-video>
+            <a-image id="paintandquest-preview-button" class="clickable" src="#paintandquest-preview" alpha-test="0.5"
+                position="0 0 0" height="0.552" width="1">
+            </a-image>
+        </a-entity>
+    </a-scene>
+    <script>
+        function showInfo() {
+            const paintandquestPreviewButton = document.querySelector("#paintandquest-preview-button");
+            const videoEl = document.querySelector("#arvideo-link");
+
+            paintandquestPreviewButton.addEventListener('click', () => {
+                paintandquestPreviewButton.setAttribute("visible", false);
+                videoEl.play();
+            });
+
+        }
+        AFRAME.registerComponent('mytarget', {
+            init: function () {
+                this.el.addEventListener('targetFound', event => {
+                    console.log("target found");
+                    setTimeout(() => {
+                        showInfo();
+                    }, 300);
+                });
+                this.el.addEventListener('targetLost', event => {
+                    console.log("target found");
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
