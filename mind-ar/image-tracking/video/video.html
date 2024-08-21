@@ -64,7 +64,13 @@
 
                 this.el.addEventListener('targetFound', (event) => {
                     setTimeout(() => {
-                        playVideo();
+                        playButton.addEventListener('click', function () {
+                            alert("clicked on play button")
+                            playButton.setAttribute("visible", false);
+                            videoEl.setAttribute("visible", true);
+                            videoAsset.play(); // Play video
+                        });
+
                     }, 300);
                 });
 
