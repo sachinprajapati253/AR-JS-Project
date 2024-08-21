@@ -20,7 +20,7 @@
         <a-assets>
             <img id="play-button" src="./assets/play.png" />
             <video id="video-mp4" autoplay="false" loop="true" src="./assets/video.mp4" crossorigin="anonymous"
-                playsinline webkit-playsinline></video>
+                playsinline webkit-playsinline controls></video>
         </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;"
@@ -44,41 +44,20 @@
                 const videoAsset = document.querySelector("#video-mp4");
 
                 playButton.addEventListener('click', function () {
-                    alert("clicked on play button")
+                    alert("Play button clicked");
                     playButton.setAttribute("visible", false);
                     videoEl.setAttribute("visible", true);
-                    videoAsset.play(); // Play video
+                    videoAsset.play(); // Play the video asset
                 });
 
-                const playVideo = () => {
-                    if (videoAsset.paused) {
-                        playButton.setAttribute("visible", true);
-                    }
-                }
-
-                const pauseVideo = () => {
-                    videoAsset.pause(); // pause video
-                    playButton.setAttribute("visible", true);
-                    videoEl.setAttribute("visible", false);
-                }
-
-                this.el.addEventListener('targetFound', (event) => {
-                    setTimeout(() => {
-                        playButton.addEventListener('click', function () {
-                            alert("clicked on play button")
-                            playButton.setAttribute("visible", false);
-                            videoEl.setAttribute("visible", true);
-                            videoAsset.play(); // Play video
-                        });
-
-                    }, 300);
+                this.el.addEventListener('targetFound', event => {
+                    alert("target found");
                 });
-
-                this.el.addEventListener('targetLost', (event) => {
-                    setTimeout(() => {
-                        pauseVideo();
-                    }, 300);
+                this.el.addEventListener('targetLost', event => {
+                    alert("target Lost");
+                    videoAsset.pause();
                 })
+
             }
         });
     </script>
