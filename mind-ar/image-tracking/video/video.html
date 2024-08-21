@@ -16,33 +16,32 @@
     <a-scene mindar-image="imageTargetSrc: ./targets.mind;" embedded color-space="sRGB"
         renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false"
         device-orientation-permission-ui="enabled: false">
-
+        <!-- Adding Video Assets  -->
         <a-assets>
-            <img id="paintandquest-preview" src="./assets/play.png" />
-            <video id="paintandquest-video-mp4" autoplay="false" loop="true" src="./assets/video.mp4"
-                crossorigin="anonymous" playsinline webkit-playsinline></video>
+            <img id="play-button" src="./assets/play.png" />
+            <video id="video-mp4" autoplay="false" loop="true" src="./assets/video.mp4" crossorigin="anonymous"
+                playsinline webkit-playsinline></video>
         </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;"
             raycaster="far: 10000; objects: .clickable"></a-camera>
+        <!-- Adding a frame entity assigning assets to it -->
+        <a-entity id="targetEntity" targetEntity mindar-image-target="targetIndex: 0">
+            <a-plane src="#play-button" class="clickable" position="0 0 0" height="0.552" width="1"></a-plane>
 
-        <a-entity mindar-image-target="targetIndex: 0">
-            <a-plane src="#paintandquest-preview" position="0 0 0" height="0.552" width="1"></a-plane>
-
-            <a-image id="play-button" class="clickable" src="#paintandquest-preview" alpha-test="0.5" position="0 0 0"
+            <a-image id="play-button" class="clickable" src="#play-button" alpha-test="0.5" position="0 0 0"
                 height="0.552" width="1"></a-image>
 
-            <a-video id="video" src="#paintandquest-video-mp4" width="1" height="0.552" position="0 0 0"
-                visible="false"></a-video>
+            <a-video id="video" src="#video-mp4" width="1" height="0.552" position="0 0 0" visible="false"></a-video>
         </a-entity>
     </a-scene>
 
     <script>
-        AFRAME.registerComponent('play-video-on-click', {
+        AFRAME.registerComponent('targetEntity', {
             init: function () {
-                const playButton = this.el;
+                const playButton = document.querySelector("#play-button")
                 const videoEl = document.querySelector("#video");
-                const videoAsset = document.querySelector("#paintandquest-video-mp4");
+                const videoAsset = document.querySelector("#video-mp4");
 
                 playButton.addEventListener('click', function () {
                     alert("Play button clicked");
@@ -52,9 +51,6 @@
                 });
             }
         });
-
-        // Attach the component to the play button
-        document.querySelector("#play-button").setAttribute("play-video-on-click", "");
     </script>
 </body>
 
