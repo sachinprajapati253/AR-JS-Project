@@ -19,7 +19,8 @@
 
         <a-assets>
             <img id="paintandquest-preview" src="./assets/play.png" />
-            <video id="paintandquest-video-mp4" autoplay="false" loop="true" src="./assets/video.mp4"></video>
+            <video id="paintandquest-video-mp4" autoplay="false" loop="true" src="./assets/video.mp4"
+                crossorigin="anonymous" playsinline webkit-playsinline></video>
         </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;"
@@ -31,8 +32,8 @@
             <a-image id="play-button" class="clickable" src="#paintandquest-preview" alpha-test="0.5" position="0 0 0"
                 height="0.552" width="1"></a-image>
 
-            <a-video id="video" src="#paintandquest-video-mp4" webkit-playsinline playsinline width="1" height="0.552"
-                position="0 0 0" visible="false"></a-video>
+            <a-video id="video" src="#paintandquest-video-mp4" width="1" height="0.552" position="0 0 0"
+                visible="false"></a-video>
         </a-entity>
     </a-scene>
 
@@ -41,12 +42,12 @@
             init: function () {
                 const playButton = document.querySelector("#play-button");
                 const videoEl = document.querySelector("#video");
-                const videoSrc = document.querySelector("#paintandquest-video-mp4");
+                const videoAsset = document.querySelector("#paintandquest-video-mp4");
 
                 playButton.addEventListener('click', function () {
                     playButton.setAttribute("visible", false);
                     videoEl.setAttribute("visible", true);
-                    videoSrc.play();
+                    videoAsset.play(); // Play the video asset
                 });
             }
         });
