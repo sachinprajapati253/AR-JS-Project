@@ -2,55 +2,51 @@
 
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+    <style>
+        body {
+            margin: 0;
+        }
+    </style>
 </head>
 
 <body>
-    <!-- A very typical use case. Detect a single image target and show some 3D objects on top. -->
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB"
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind;" embedded color-space="sRGB"
         renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false"
         device-orientation-permission-ui="enabled: false">
-        <!-- Adding Assets -->
+
         <a-assets>
-            <img id="paintandquest-preview" src="./play.png" />
-            <video id="arvideo" src="./video.mp4" autoplay="false" loop="true" muted controls></video>
+            <img id="paintandquest-preview" src="./assets/play.png" />
+            <video id="paintandquest-video-mp4" autoplay="false" loop="true" src="./assets/video.mp4"></video>
         </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;"
-            raycaster="near: 10; far: 10000; objects: .clickable"></a-camera>
-        <!-- Binding Assets to A entity will show top of the target Image -->
-        <a-entity id="mytarget" mytarget mindar-image-target="targetIndex: 0">
-            <a-video id="arvideo-link" webkit-playsinline playsinline width="1" height="0.552"
-                position="0 0 0"></a-video>
-            <a-image id="paintandquest-preview-button" class="clickable" src="#paintandquest-preview" alpha-test="0.5"
-                position="0 0 0" height="0.552" width="1">
-            </a-image>
+            raycaster="far: 10000; objects: .clickable"></a-camera>
+
+        <a-entity id="mytarget" mindar-image-target="targetIndex: 0">
+            <a-plane src="#paintandquest-preview" position="0 0 0" height="0.552" width="1"></a-plane>
+
+            <a-image id="play-button" class="clickable" src="#paintandquest-preview" alpha-test="0.5" position="0 0 0"
+                height="0.552" width="1"></a-image>
+
+            <a-video id="video" src="#paintandquest-video-mp4" webkit-playsinline playsinline width="1" height="0.552"
+                position="0 0 0" visible="false"></a-video>
         </a-entity>
     </a-scene>
+
     <script>
-        function showInfo() {
-            const paintandquestPreviewButton = document.querySelector("#paintandquest-preview-button");
-            const videoEl = document.querySelector("#arvideo-link");
-
-            paintandquestPreviewButton.addEventListener('click', () => {
-                paintandquestPreviewButton.setAttribute("visible", false);
-                const videoEl = document.querySelector("#arvideo-link");
-                videoEl.setAttribute("src", "#arvideo");
-                videoEl.play();
-            });
-
-        }
         AFRAME.registerComponent('mytarget', {
             init: function () {
-                this.el.addEventListener('targetFound', event => {
-                    console.log("target found");
-                    setTimeout(() => {
-                        showInfo();
-                    }, 300);
-                });
-                this.el.addEventListener('targetLost', event => {
-                    console.log("target found");
+                const playButton = document.querySelector("#play-button");
+                const videoEl = document.querySelector("#video");
+                const videoSrc = document.querySelector("#paintandquest-video-mp4");
+
+                playButton.addEventListener('click', function () {
+                    playButton.setAttribute("visible", false);
+                    videoEl.setAttribute("visible", true);
+                    videoSrc.play();
                 });
             }
         });
