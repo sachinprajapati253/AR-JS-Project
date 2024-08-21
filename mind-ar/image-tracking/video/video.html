@@ -26,7 +26,7 @@
         <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;"
             raycaster="far: 10000; objects: .clickable"></a-camera>
 
-        <a-entity id="mytarget" mindar-image-target="targetIndex: 0">
+        <a-entity mindar-image-target="targetIndex: 0">
             <a-plane src="#paintandquest-preview" position="0 0 0" height="0.552" width="1"></a-plane>
 
             <a-image id="play-button" class="clickable" src="#paintandquest-preview" alpha-test="0.5" position="0 0 0"
@@ -38,20 +38,23 @@
     </a-scene>
 
     <script>
-        AFRAME.registerComponent('mytarget', {
+        AFRAME.registerComponent('play-video-on-click', {
             init: function () {
-                const playButton = document.querySelector("#play-button");
+                const playButton = this.el;
                 const videoEl = document.querySelector("#video");
                 const videoAsset = document.querySelector("#paintandquest-video-mp4");
 
                 playButton.addEventListener('click', function () {
-                    alert("play button clicked")
+                    alert("Play button clicked");
                     playButton.setAttribute("visible", false);
                     videoEl.setAttribute("visible", true);
                     videoAsset.play(); // Play the video asset
                 });
             }
         });
+
+        // Attach the component to the play button
+        document.querySelector("#play-button").setAttribute("play-video-on-click", "");
     </script>
 </body>
 
