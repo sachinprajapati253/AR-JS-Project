@@ -40,7 +40,7 @@
     <script>
         AFRAME.registerComponent('targetentity', {
             init: function () {
-                const playButton = document.querySelector("#playbtn-image");
+                const playButton = this.el;
                 const videoEl = document.querySelector("#video");
                 const videoAsset = document.querySelector("#video-mp4");
 
