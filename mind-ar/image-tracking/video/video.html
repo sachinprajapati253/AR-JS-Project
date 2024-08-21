@@ -37,18 +37,41 @@
     </a-scene>
 
     <script>
+        const playButton = document.querySelector("#play-button")
+        const videoEl = document.querySelector("#video");
+        const videoAsset = document.querySelector("#video-mp4");
+
+        playButton.addEventListener('click', function () {
+            playButton.setAttribute("visible", false);
+            videoEl.setAttribute("visible", true);
+            videoAsset.play(); // Play video
+        });
+
+        const playVideo = () => {
+            if (videoAsset.paused) {
+                playButton.setAttribute("visible", true);
+            }
+        }
+
+        const pauseVideo = () => {
+            videoAsset.pause(); // pause video
+            playButton.setAttribute("visible", true);
+            videoEl.setAttribute("visible", false);
+        }
+
         AFRAME.registerComponent('targetEntity', {
             init: function () {
-                const playButton = document.querySelector("#play-button")
-                const videoEl = document.querySelector("#video");
-                const videoAsset = document.querySelector("#video-mp4");
-
-                playButton.addEventListener('click', function () {
-                    alert("Play button clicked");
-                    playButton.setAttribute("visible", false);
-                    videoEl.setAttribute("visible", true);
-                    videoAsset.play(); // Play the video asset
+                this.el.addEventListener('targetFound', (event) => {
+                    setTimeout(() => {
+                        playVideo();
+                    }, 300);
                 });
+
+                this.el.addEventListener('targetLost', (event) => {
+                    setTimeout(() => {
+                        pauseVideo();
+                    }, 300);
+                })
             }
         });
     </script>
