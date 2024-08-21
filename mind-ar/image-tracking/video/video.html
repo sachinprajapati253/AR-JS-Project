@@ -45,6 +45,7 @@
                 const videoAsset = document.querySelector("#paintandquest-video-mp4");
 
                 playButton.addEventListener('click', function () {
+                    alert("play button clicked")
                     playButton.setAttribute("visible", false);
                     videoEl.setAttribute("visible", true);
                     videoAsset.play(); // Play the video asset
