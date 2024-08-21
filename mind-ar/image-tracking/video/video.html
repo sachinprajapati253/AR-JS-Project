@@ -43,17 +43,26 @@
                 const playButton = this.el;
                 const videoEl = document.querySelector("#video");
                 const videoAsset = document.querySelector("#video-mp4");
+                let userClick = false;
 
                 playButton.addEventListener('click', function () {
-                    alert("Play button clicked");
                     playButton.setAttribute("visible", false);
                     videoEl.setAttribute("visible", true);
                     videoAsset.play(); // Play the video asset
+                    userClick = true;
                 });
+
+                this.el.addEventListener('targetFound', () => {
+                    setTimeout(() => {
+                        if (videoAsset.paused && userClick) {
+                            playButton.click();
+                        }
+                    }, 300);
+                });
+
                 this.el.addEventListener('targetLost', () => {
                     setTimeout(() => {
                         videoAsset.pause(); // Pause video
-                        alert("target lost");
                     }, 300);
                 });
             }
