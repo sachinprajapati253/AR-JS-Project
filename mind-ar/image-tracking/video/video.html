@@ -20,7 +20,7 @@
         <a-assets>
             <img id="play-button" src="./assets/play.png" />
             <video id="video-mp4" autoplay="false" loop="true" src="./assets/video.mp4" crossorigin="anonymous"
-                playsinline webkit-playsinline controls></video>
+                playsinline webkit-playsinline></video>
         </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;"
@@ -49,15 +49,6 @@
                     videoEl.setAttribute("visible", true);
                     videoAsset.play(); // Play the video asset
                 });
-
-                this.el.addEventListener('targetFound', event => {
-                    alert("target found");
-                });
-                this.el.addEventListener('targetLost', event => {
-                    alert("target Lost");
-                    videoAsset.pause();
-                })
-
             }
         });
     </script>
