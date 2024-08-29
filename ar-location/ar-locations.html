@@ -5,59 +5,60 @@
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title>GeoAR.js demo</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous" />
-    <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
-    <script src="https://cdn.rawgit.com/jeromeetienne/ar.js/1.7.2/aframe/build/aframe-ar.js"></script>
+    <script src='https://aframe.io/releases/0.9.2/aframe.min.js'></script>
+    <script src="https://raw.githack.com/jeromeetienne/AR.js/master/aframe/build/aframe-ar.min.js"></script>
+    <script src="https://raw.githack.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>
+    <script>
+        THREEx.ArToolkitContext.baseURL = 'https://raw.githack.com/jeromeetienne/ar.js/master/three.js/'
+    </script>
 </head>
 
 <body style="margin: 0; overflow: hidden">
-    <a-scene cursor="rayOrigin: mouse; fuse: true; fuseTimeout: 0;" raycaster="objects: [gps-entity-place];"
-        vr-mode-ui="enabled: false" embedded arjs="sourceType: webcam; debugUIEnabled: false" htmlembed>
-        <a-camera gps-camera="minDistance: 0; maxDistance: 10000;" rotation-reader></a-camera>
-    </a-scene>
+
+    <body style="margin: 0; overflow: hidden">
+        <a-scene cursor="rayOrigin: mouse; fuse: true; fuseTimeout: 0;" raycaster="objects: [gps-entity-place];"
+            vr-mode-ui="enabled: false" embedded arjs="sourceType: webcam; debugUIEnabled: false" htmlembed>
+            <a-camera gps-camera="minDistance: 0; maxDistance: 10000;" rotation-reader></a-camera>
+        </a-scene>
+    </body>
+
     <script>
         // Sample store data
         const allStore = {
             "1": {
                 "strategy": "1",
-                "storename": "Popeyes",
-                "address": "Lulu Mall, R04, Second Floor Global Malls, Gopalpura, Bengaluru, Karnataka 560023",
-                "phone": "1800 309 1234",
-                "lat": "12.98166282",
-                "lon": "77.56365007"
+                "storename": "The Bier Library Brewery & Kitchen, Koramangala",
+                "address": "14, Patel Narayana Reddy Layout, 80 Feet Rd, 6th Block",
+                "lat": "12.939377358394108",
+                "lon": "77.62607587700325"
             },
             "2": {
                 "strategy": "2",
-                "storename": "Popeyes",
-                "address": "Chandra Layout, Ground Floor - 99, 60 Feet Road, Chandra Layout Main Rd, Govindaraja Nagar Ward, Bengaluru, Karnataka 560040",
-                "phone": "1800 309 1234",
-                "lat": "12.96111919",
-                "lon": "77.52759274"
+                "storename": "Taco Bell - SJR Kormangala",
+                "address": "Plot No, Sony World Junction, 36, 100 Feet Rd",
+                "lat": "12.937817282746845",
+                "lon": "77.62686933927014",
             },
             "3": {
                 "strategy": "3",
-                "storename": "Popeyes",
-                "address": "Ground and First Floor, 333, 3rd Stage 4th Block, Basaveshwar Nagar, Bengaluru, Karnataka 560079",
-                "phone": "1800 309 1234",
-                "lat": "12.99287476",
-                "lon": "77.53865876"
+                "storename": "The Hole In The Wall Cafe",
+                "address": "3, 8th Main Rd, 4th Block, Koramangala, Bengaluru, Karnataka 560047",
+                "lat": "12.934908838543633",
+                "lon": "77.62542756826196"
             },
             "4": {
                 "strategy": "4",
-                "storename": "Popeyes",
-                "address": "Ground Floor, 367, 80 Feet Rd, Judges Colony, AK Colony, RT Nagar, Bengaluru, Karnataka 560032",
-                "phone": "1800 309 1234",
-                "lat": "13.02398382",
-                "lon": "77.59262947"
+                "storename": "Sri Krishna Sagar veg Restaurant",
+                "address": "510, 6th Cross Rd, 6th Block, Koramangala, Bengaluru, Karnataka 560047",
+                "lat": "12.93725016020393",
+                "lon": "77.62465685443142"
             },
             "5": {
                 "strategy": "5",
-                "storename": "Popeyes",
-                "address": "Municipal Corporation No 10, PID No 100-731-10, KC Tower ITI & HB Society, New BEL Rd, Bengaluru, Karnataka 560054",
-                "phone": "1800 309 1234",
-                "lat": "13.03284068",
-                "lon": "77.56967718"
+                "storename": "Pizza Hut",
+                "address": "No 487, 80 Feet Rd, opposite to BATA Shoes, 6th Block, Koramangala, Bengaluru, Karnataka 560095",
+                "lat": "12.93997523864049",
+                "lon": "77.62517436412237"
             }
         };
 
@@ -75,8 +76,8 @@
 
                 // Create plane entity
                 const placePlane = document.createElement("a-plane");
-                placePlane.setAttribute("width", "10");
-                placePlane.setAttribute("height", "4");
+                placePlane.setAttribute("width", "8");
+                placePlane.setAttribute("height", "2.5");
                 placePlane.setAttribute("color", "#4CC3D9");
                 placePlane.setAttribute("scale", "5 5 5");
 
@@ -84,17 +85,23 @@
                 const nameText = document.createElement("a-text");
                 nameText.setAttribute("align", "center");
                 nameText.setAttribute("color", "#000");
-                nameText.setAttribute("position", "0 0.6 0.1"); // Adjusted position to fit within plane
-                nameText.setAttribute("scale", "2 2 1"); // Adjusted scale
+                nameText.setAttribute("position", "0 0.5 0.1"); // Adjusted position to fit within plane
+                nameText.setAttribute("scale", "1.7 1.7 1"); // Adjusted scale
                 nameText.setAttribute("value", `${store.storename}`);
+                nameText.addEventListener('loaded', () => {
+                    window.dispatchEvent(new CustomEvent('gps-entity-place-loaded'))
+                });
 
                 // Create text entity for address
                 const addressText = document.createElement("a-text");
                 addressText.setAttribute("align", "center");
                 addressText.setAttribute("color", "#000");
-                addressText.setAttribute("position", "0 -0.6 0.1"); // Positioned below the name
+                addressText.setAttribute("position", "0 -0.5 0.1"); // Positioned below the name
                 addressText.setAttribute("scale", "1.5 1.5 1");
                 addressText.setAttribute("value", `${store.address}`);
+                addressText.addEventListener('loaded', () => {
+                    window.dispatchEvent(new CustomEvent('gps-entity-place-loaded'))
+                });
 
                 // Append name and address text to plane
                 placePlane.appendChild(nameText);
