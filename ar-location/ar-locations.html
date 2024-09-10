@@ -61,7 +61,6 @@
                 "lon": "77.62517436412237"
             }
         };
-
         window.onload = () => {
             const scene = document.querySelector("a-scene");
 
@@ -77,43 +76,57 @@
                 // Create plane entity
                 const placePlane = document.createElement("a-plane");
                 placePlane.setAttribute("width", "8");
-                placePlane.setAttribute("height", "2.5");
-                placePlane.setAttribute("color", "#4CC3D9");
+                placePlane.setAttribute("height", "3");
+                placePlane.setAttribute("color", "#fff");
                 placePlane.setAttribute("scale", "5 5 5");
 
                 // Create text entity for store name
                 const nameText = document.createElement("a-text");
                 nameText.setAttribute("align", "center");
                 nameText.setAttribute("color", "#000");
-                nameText.setAttribute("position", "0 0.5 0.1"); // Adjusted position to fit within plane
-                nameText.setAttribute("scale", "1.7 1.7 1"); // Adjusted scale
+                nameText.setAttribute("position", "0 0.6 0.1");
+                nameText.setAttribute("scale", "1.5 1.5 1.5");
                 nameText.setAttribute("value", `${store.storename}`);
-                nameText.addEventListener('loaded', () => {
-                    window.dispatchEvent(new CustomEvent('gps-entity-place-loaded'))
-                });
 
                 // Create text entity for address
                 const addressText = document.createElement("a-text");
                 addressText.setAttribute("align", "center");
-                addressText.setAttribute("color", "#000");
-                addressText.setAttribute("position", "0 -0.5 0.1"); // Positioned below the name
+                addressText.setAttribute("color", "#1c6ef3");
+                addressText.setAttribute("position", "0 -0.1 0.1");
                 addressText.setAttribute("scale", "1.5 1.5 1");
                 addressText.setAttribute("value", `${store.address}`);
-                addressText.addEventListener('loaded', () => {
-                    window.dispatchEvent(new CustomEvent('gps-entity-place-loaded'))
-                });
 
-                // Append name and address text to plane
+                // Create text entity for distance
+                const distanceText = document.createElement("a-text");
+                distanceText.setAttribute("align", "center");
+                distanceText.setAttribute("color", "#FF0000");
+                distanceText.setAttribute("position", "0 -0.8 0.1");
+                distanceText.setAttribute("scale", "1.5 1.5 1");
+
+                // Append texts to plane
                 placePlane.appendChild(nameText);
-                placePlane.appendChild(addressText);
+                placePlane.append(addressText);
+                placePlane.appendChild(distanceText);
 
-                // Append plane to entity
                 placeEntity.appendChild(placePlane);
-
-                // Append entity to scene
                 scene.appendChild(placeEntity);
+
+                function updateDistance() {
+                    const distance = placeEntity.getAttribute('distancemsg');
+                    if (distance) {
+                        distanceText.setAttribute("value", `${distance} Away`);
+                    }
+                }
+                setTimeout(() => {
+                    updateDistance()
+                }, 2000);
+                // Update distance when GPS position changes
+                document.querySelector('[gps-camera]').addEventListener('gps-camera-update-position', () => {
+                    updateDistance()
+                });
             }
         };
+
     </script>
 </body>
 
