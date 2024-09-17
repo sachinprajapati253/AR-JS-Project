@@ -11,14 +11,17 @@
     <script>
         THREEx.ArToolkitContext.baseURL = 'https://raw.githack.com/jeromeetienne/ar.js/master/three.js/'
     </script>
+    <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
 </head>
 
 <body style="margin: 0; overflow: hidden">
 
     <body style="margin: 0; overflow: hidden">
         <a-scene cursor="rayOrigin: mouse; fuse: true; fuseTimeout: 0;" raycaster="objects: [gps-entity-place];"
-            vr-mode-ui="enabled: false" embedded arjs="sourceType: webcam; debugUIEnabled: false" htmlembed>
-            <a-camera gps-camera="minDistance: 0; maxDistance: 10000;" rotation-reader></a-camera>
+            vr-mode-ui="enabled: false" embedded arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false"
+            htmlembed>
+            <a-camera id='camera1' look-controls-enabled='false' arjs-look-controls='smoothingFactor: 0.1'
+                gps-camera="minDistance: 5;" rotation-reader></a-camera>
         </a-scene>
     </body>
 
@@ -79,6 +82,9 @@
                 placePlane.setAttribute("height", "3");
                 placePlane.setAttribute("color", "#fff");
                 placePlane.setAttribute("scale", "5 5 5");
+                placePlane.addEventListener('loaded', () => {
+                    window.dispatchEvent(new CustomEvent('gps-entity-place-loaded'))
+                });
 
                 // Create text entity for store name
                 const nameText = document.createElement("a-text");
@@ -87,6 +93,7 @@
                 nameText.setAttribute("position", "0 0.6 0.1");
                 nameText.setAttribute("scale", "1.5 1.5 1.5");
                 nameText.setAttribute("value", `${store.storename}`);
+                nameText.setAttribute("look-at", "[gps-camera]");
 
                 // Create text entity for address
                 const addressText = document.createElement("a-text");
@@ -95,6 +102,7 @@
                 addressText.setAttribute("position", "0 -0.1 0.1");
                 addressText.setAttribute("scale", "1.5 1.5 1");
                 addressText.setAttribute("value", `${store.address}`);
+                addressText.setAttribute("look-at", "[gps-camera]");
 
                 // Create text entity for distance
                 const distanceText = document.createElement("a-text");
@@ -102,13 +110,14 @@
                 distanceText.setAttribute("color", "#FF0000");
                 distanceText.setAttribute("position", "0 -0.8 0.1");
                 distanceText.setAttribute("scale", "1.5 1.5 1");
+                distanceText.setAttribute("look-at", "[gps-camera]");
 
                 // Append texts to plane
+                placeEntity.appendChild(placePlane);
                 placePlane.appendChild(nameText);
                 placePlane.append(addressText);
                 placePlane.appendChild(distanceText);
 
-                placeEntity.appendChild(placePlane);
                 scene.appendChild(placeEntity);
 
                 function updateDistance() {
@@ -116,10 +125,11 @@
                     if (distance) {
                         distanceText.setAttribute("value", `${distance} Away`);
                     }
+                    // console.log(distance)
                 }
                 setTimeout(() => {
                     updateDistance()
-                }, 2000);
+                }, 2500);
                 // Update distance when GPS position changes
                 document.querySelector('[gps-camera]').addEventListener('gps-camera-update-position', () => {
                     updateDistance()

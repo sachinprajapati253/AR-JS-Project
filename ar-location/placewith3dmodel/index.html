@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>GeoAR.js Navigation</title>
+    <script src='https://aframe.io/releases/0.9.2/aframe.min.js'></script>
+    <script src="https://raw.githack.com/jeromeetienne/AR.js/master/aframe/build/aframe-ar.min.js"></script>
+    <script src="https://raw.githack.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>
+    <script>
+        THREEx.ArToolkitContext.baseURL = 'https://raw.githack.com/jeromeetienne/ar.js/master/three.js/'
+    </script>
+</head>
+
+<body style='margin: 0; overflow: hidden;'>
+    <a-scene vr-mode-ui="enabled: false" embedded
+        arjs='sourceType: webcam; sourceWidth:1280; sourceHeight:960; displayWidth: 1280; displayHeight: 960; debugUIEnabled: false;'>
+        <a-camera gps-camera rotation-reader></a-camera>
+    </a-scene>
+
+    <script>
+        const destination = {
+            lat: 12.939377358394108,  // Set the latitude of the destination
+            lon: 77.62607587700325    // Set the longitude of the destination
+        };
+
+        window.onload = () => {
+            renderDestinationModel(destination);
+            document.querySelector('[gps-camera]').addEventListener('gps-camera-update-position', (e) => {
+                const userLat = e.detail.position.latitude;
+                const userLon = e.detail.position.longitude;
+                checkProximity(userLat, userLon);
+            });
+        };
+
+        function renderDestinationModel(destination) {
+            let scene = document.querySelector('a-scene');
+            let model = document.createElement('a-entity');
+            model.setAttribute('gps-entity-place', `latitude: ${destination.lat}; longitude: ${destination.lon};`);
+            model.setAttribute('gltf-model', '../assets/magnemite/scene.gltf');  // Replace with your model's path
+            model.setAttribute('rotation', '0 180 0');
+            model.setAttribute('animation-mixer', '');
+            model.setAttribute('scale', '1 1 1');  // Adjust scale based on model
+            scene.appendChild(model);
+        }
+
+        function checkProximity(userLat, userLon) {
+            const distance = calculateDistance(userLat, userLon, destination.lat, destination.lon);
+            if (distance < 20) {  // Adjust the proximity threshold
+                alert("You've reached the destination!");
+            }
+        }
+
+        // Function to calculate distance between two GPS coordinates
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; // Earth's radius in meters
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δφ = (lat2 - lat1) * Math.PI / 180;
+            const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                Math.cos(φ1) * Math.cos(φ2) *
+                Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+            return R * c; // Distance in meters
+        }
+    </script>
+</body>
+
+</html>
