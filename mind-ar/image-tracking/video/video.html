@@ -34,8 +34,8 @@
             <a-image id="play-button" class="clickable" src="#playbtn-image" alpha-test="0.5" position="0 0 0.1"
                 width="0.7" height="0.7"></a-image>
 
-            <a-video id="video" src="#video-mp4" width="1.5" height="0.75" position="0 0 0.15" visible="false"
-                controls></a-video>
+            <a-video id="video" class="clickable" src="#video-mp4" width="1.5" height="0.75" position="0 0 0.15"
+                visible="false" controls></a-video>
         </a-entity>
     </a-scene>
 
@@ -54,6 +54,10 @@
                     userClick = true;
                 });
 
+                videoEl.addEventListener("click", event => {
+                    window.open("https://www.shell.com.my/motorists/oils-lubricants/helix-for-cars.html?utm_source=programmatic&utm_medium=interstitial&utm_term=cpm&utm_content=B_320x480&utm_campaign=location_intel_campaign", "_blank");
+                });
+
                 this.el.addEventListener('targetFound', () => {
                     setTimeout(() => {
                         if (videoAsset.paused && userClick) {
@@ -68,6 +72,7 @@
                     }, 300);
                 });
             }
+
         });
 
     </script>
