@@ -42,20 +42,26 @@
     <script>
         AFRAME.registerComponent('targetentity', {
             init: function () {
-                const playButton = this.el;
-                const videoEl = document.querySelector("#video");
+                const playButton = this.el.querySelector("#play-button");
+                const videoEl = this.el.querySelector("#video");
                 const videoAsset = document.querySelector("#video-mp4");
                 let userClick = false;
+                let isVideoPlaying = false;
 
                 playButton.addEventListener('click', function () {
                     playButton.setAttribute("visible", false);
                     videoEl.setAttribute("visible", true);
-                    videoAsset.play(); // Play the video asset
+                    videoAsset.play();
                     userClick = true;
+                    isVideoPlaying = true;
                 });
 
                 videoEl.addEventListener("click", event => {
-                    window.open("https://www.shell.com.my/motorists/oils-lubricants/helix-for-cars.html?utm_source=programmatic&utm_medium=interstitial&utm_term=cpm&utm_content=B_320x480&utm_campaign=location_intel_campaign", "_blank");
+                    if (isVideoPlaying) {
+                        window.open("https://www.shell.com.my/motorists/oils-lubricants/helix-for-cars.html?utm_source=programmatic&utm_medium=interstitial&utm_term=cpm&utm_content=B_320x480&utm_campaign=location_intel_campaign", "_blank");
+                    } else {
+                        playButton.click();
+                    }
                 });
 
                 this.el.addEventListener('targetFound', () => {
@@ -68,11 +74,11 @@
 
                 this.el.addEventListener('targetLost', () => {
                     setTimeout(() => {
-                        videoAsset.pause(); // Pause video
+                        videoAsset.pause();
+                        isVideoPlaying = false;
                     }, 300);
                 });
             }
-
         });
 
     </script>
