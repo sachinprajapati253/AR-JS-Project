@@ -1,0 +1,90 @@
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AR Watch Try-On</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #overlay {
+            width: 80%;
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        #buttons {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .btn {
+            background: white;
+            color: black;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="overlay">
+        <h5>Try On Your Omega Watch</h5>
+    </div>
+
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB"
+        renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false"
+        device-orientation-permission-ui="enabled: false">
+
+        <a-assets>
+            <img id="watch1"
+                src="https://img.freepik.com/free-photo/stylish-golden-watch-white-surface_181624-27078.jpg?ga=GA1.1.1800912267.1739510681&semt=ais_hybrid&w=740">
+            <img id="watch2"
+                src="https://img.freepik.com/free-psd/watch-isolated-transparent-background_191095-27322.jpg?ga=GA1.1.1800912267.1739510681&semt=ais_hybrid&w=740">
+            <img id="watch3"
+                src="https://img.freepik.com/free-psd/watch-isolated-transparent-background_191095-27047.jpg?ga=GA1.1.1800912267.1739510681&semt=ais_hybrid&w=740">
+        </a-assets>
+
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+        <a-entity mindar-image-target="targetIndex: 0">
+            <a-image id="watchImage" src="#watch1" width="0.4" height="0.4" position="0 -0.25 0">
+            </a-image>
+        </a-entity>
+    </a-scene>
+
+    <div id="buttons">
+        <button class="btn" onclick="changeWatch(1)">Style 1</button>
+        <button class="btn" onclick="changeWatch(2)">Style 2</button>
+        <button class="btn" onclick="changeWatch(3)">Style 3</button>
+    </div>
+
+    <script>
+        function changeWatch(style) {
+            let watchImage = document.getElementById("watchImage");
+            let imageSrc = ["#watch1", "#watch2", "#watch3"];
+            watchImage.setAttribute("src", imageSrc[style - 1]);
+        }
+    </script>
+
+</body>
+
+</html>
