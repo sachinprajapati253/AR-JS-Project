@@ -9,6 +9,7 @@
         body {
             margin: 0;
             overflow: hidden;
+            font-family: Arial, sans-serif;
         }
 
         #overlay {
@@ -21,25 +22,46 @@
             padding: 10px 20px;
             border-radius: 10px;
             color: white;
-            font-family: Arial, sans-serif;
             text-align: center;
         }
 
-        #buttons {
+        #thumbnail-container {
             position: absolute;
             bottom: 20px;
-            width: 100%;
-            text-align: center;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            overflow-x: auto;
+            white-space: nowrap;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 10px;
+            display: flex;
+            gap: 10px;
+            scrollbar-width: none;
+            /* Hide scrollbar */
         }
 
-        .btn {
-            background: white;
-            color: black;
-            padding: 10px 15px;
-            margin: 5px;
-            border-radius: 5px;
+        #thumbnail-container::-webkit-scrollbar {
+            display: none;
+            /* Hide scrollbar on WebKit browsers */
+        }
+
+        .thumbnail {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 10px;
             cursor: pointer;
-            font-weight: bold;
+            transition: transform 0.2s, border 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .thumbnail:hover,
+        .thumbnail.selected {
+            transform: scale(1.1);
+            border: 2px solid white;
         }
     </style>
 </head>
@@ -58,6 +80,8 @@
             <img id="watch1" src="./assets/watch1.png">
             <img id="watch2" src="./assets/watch2.png">
             <img id="watch3" src="./assets/watch3.png">
+            <img id="watch4" src="./assets/watch4.png">
+            <img id="watch5" src="./assets/watch5.png">
         </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
@@ -68,17 +92,26 @@
         </a-entity>
     </a-scene>
 
-    <div id="buttons">
-        <button class="btn" onclick="changeWatch(1)">Style 1</button>
-        <button class="btn" onclick="changeWatch(2)">Style 2</button>
-        <button class="btn" onclick="changeWatch(3)">Style 3</button>
+    <!-- Thumbnail Slider -->
+    <div id="thumbnail-container">
+        <img class="thumbnail selected" src="./assets/watch1.png" onclick="changeWatch(1)">
+        <img class="thumbnail" src="./assets/watch2.png" onclick="changeWatch(2)">
+        <img class="thumbnail" src="./assets/watch3.png" onclick="changeWatch(3)">
+        <img class="thumbnail" src="./assets/watch4.png" onclick="changeWatch(4)">
+        <img class="thumbnail" src="./assets/watch5.png" onclick="changeWatch(5)">
     </div>
 
     <script>
-        function changeWatch(style) {
+        function changeWatch(index) {
             let watchImage = document.getElementById("watchImage");
-            let imageSrc = ["#watch1", "#watch2", "#watch3"];
-            watchImage.setAttribute("src", imageSrc[style - 1]);
+            let imageSrc = ["#watch1", "#watch2", "#watch3", "#watch4", "#watch5"];
+            watchImage.setAttribute("src", imageSrc[index - 1]);
+
+            // Remove "selected" class from all thumbnails
+            document.querySelectorAll('.thumbnail').forEach(thumb => thumb.classList.remove('selected'));
+
+            // Add "selected" class to the clicked thumbnail
+            document.querySelectorAll('.thumbnail')[index - 1].classList.add('selected');
         }
     </script>
 
