@@ -146,26 +146,26 @@
                 const x2 = elbow.x * canvas.width;
                 const y2 = elbow.y * canvas.height;
                 // Add the visibility and position check here
-                if (wrist.visibility > 0.8 && elbow.visibility > 0.8 && wrist.y > shoulder.y) {
-                    const angle = Math.atan2(y2 - y, x2 - x);
-                    const dist = Math.hypot(x2 - x, y2 - y);
+                // if (wrist.visibility > 0.8 && elbow.visibility > 0.8 && wrist.y > shoulder.y) {
+                const angle = Math.atan2(y2 - y, x2 - x);
+                const dist = Math.hypot(x2 - x, y2 - y);
 
-                    // Smoother motion
-                    lastX = lastX * 0.9 + x * 0.1;
-                    lastY = lastY * 0.9 + y * 0.1;
+                // Smoother motion
+                lastX = lastX * 0.9 + x * 0.1;
+                lastY = lastY * 0.9 + y * 0.1;
 
-                    const size = dist * 0.6; // Smaller, more natural scale
+                const size = dist * 0.6; // Smaller, more natural scale
 
-                    // Adjusting position to the back of the wrist, aligning better with the wrist's back position
-                    const offsetX = 0; // Fine-tune this if needed for wrist positioning
-                    const offsetY = 10; // Adjust to keep watch slightly above wrist
+                // Adjusting position to the back of the wrist, aligning better with the wrist's back position
+                const offsetX = 0; // Fine-tune this if needed for wrist positioning
+                const offsetY = 10; // Adjust to keep watch slightly above wrist
 
-                    ctx.save();
-                    ctx.translate(lastX + offsetX, lastY + offsetY);
-                    ctx.rotate(angle);
-                    ctx.drawImage(currentARWatch, -size / 2, -size / 2.5, size, size); // Slight upward shift
-                    ctx.restore();
-                }
+                ctx.save();
+                ctx.translate(lastX + offsetX, lastY + offsetY);
+                ctx.rotate(angle);
+                ctx.drawImage(currentARWatch, -size / 2, -size / 2.5, size, size); // Slight upward shift
+                ctx.restore();
+                // }
             }
         });
 
