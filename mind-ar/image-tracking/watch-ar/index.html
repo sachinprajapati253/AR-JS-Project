@@ -1,120 +1,177 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>AR Watch Try-On</title>
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <meta charset="UTF-8" />
+    <title>Wrist Watch Try-On</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            font-family: Arial, sans-serif;
         }
 
-        #overlay {
+        .mainar {
+            width: 640px;
+            height: 667px;
+            position: relative;
+        }
+
+        canvas,
+        video {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .title {
+            position: absolute;
+            top: 1%;
+            left: 40%;
+            transform: translateX(-40%);
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            padding: 4px;
+            border-radius: 10px;
+            z-index: 10;
             width: 80%;
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.7);
-            padding: 10px 20px;
-            border-radius: 10px;
-            color: white;
+            margin: 10px;
             text-align: center;
+
         }
 
-        #thumbnail-container {
+        #watch-picker {
             position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 400px;
-            overflow-x: auto;
-            white-space: nowrap;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 10px;
-            border-radius: 10px;
+            bottom: 3%;
+            left: 40%;
+            transform: translateX(-40%);
             display: flex;
             gap: 10px;
-            scrollbar-width: none;
-            /* Hide scrollbar */
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 10px;
+            z-index: 10;
         }
 
-        #thumbnail-container::-webkit-scrollbar {
-            display: none;
-            /* Hide scrollbar on WebKit browsers */
-        }
-
-        .thumbnail {
+        .watch-thumb {
             width: 60px;
             height: 60px;
-            object-fit: cover;
-            border-radius: 10px;
+            object-fit: contain;
+            border-radius: 6px;
             cursor: pointer;
             transition: transform 0.2s, border 0.2s;
             border: 2px solid transparent;
         }
 
-        .thumbnail:hover,
-        .thumbnail.selected {
+        .watch-thumb:hover,
+        .watch-thumb.selected {
             transform: scale(1.1);
             border: 2px solid white;
+
         }
     </style>
 </head>
 
 <body>
-
-    <div id="overlay">
-        <h5>Try On Your Omega Watch</h5>
+    <div class="mainar">
+        <div class="title">
+            <h5>Lift your wrist to experience the virtual watch try-on</h5>
+        </div>
+        <video class="input_video" autoplay muted playsinline></video>
+        <canvas class="output_canvas"></canvas>
+        <div id="watch-picker">
+            <img class="watch-thumb selected" src="./assets/watch1.png" data-index="0" onclick="setWatch(0)">
+            <img class="watch-thumb" src="./assets/watch2.png" data-index="1" onclick="setWatch(1)">
+            <img class="watch-thumb" src="./assets/watch3.png" data-index="2" onclick="setWatch(2)">
+            <img class="watch-thumb" src="./assets/watch4.png" data-index="3" onclick="setWatch(3)">
+            <img class="watch-thumb" src="./assets/watch5.png" data-index="4" onclick="setWatch(4)">
+        </div>
     </div>
 
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB"
-        renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false"
-        device-orientation-permission-ui="enabled: false">
-
-        <a-assets>
-            <img id="watch1" src="./assets/watch1.png">
-            <img id="watch2" src="./assets/watch2.png">
-            <img id="watch3" src="./assets/watch3.png">
-            <img id="watch4" src="./assets/watch4.png">
-            <img id="watch5" src="./assets/watch5.png">
-        </a-assets>
-
-        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-        <a-entity mindar-image-target="targetIndex: 0">
-            <a-image id="watchImage" src="#watch1" width="0.4" height="0.4" position="0 -0.25 0">
-            </a-image>
-        </a-entity>
-    </a-scene>
-
-    <!-- Thumbnail Slider -->
-    <div id="thumbnail-container">
-        <img class="thumbnail selected" src="./assets/watch1.png" onclick="changeWatch(1)">
-        <img class="thumbnail" src="./assets/watch2.png" onclick="changeWatch(2)">
-        <img class="thumbnail" src="./assets/watch3.png" onclick="changeWatch(3)">
-        <img class="thumbnail" src="./assets/watch4.png" onclick="changeWatch(4)">
-        <img class="thumbnail" src="./assets/watch5.png" onclick="changeWatch(5)">
-    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
     <script>
-        function changeWatch(index) {
-            let watchImage = document.getElementById("watchImage");
-            let imageSrc = ["#watch1", "#watch2", "#watch3", "#watch4", "#watch5"];
-            watchImage.setAttribute("src", imageSrc[index - 1]);
+        const video = document.querySelector(".input_video");
+        const canvas = document.querySelector(".output_canvas");
+        const ctx = canvas.getContext("2d");
+        const watchThumbs = document.querySelectorAll(".watch-thumb");
+        const watches = [];
 
-            // Remove "selected" class from all thumbnails
-            document.querySelectorAll('.thumbnail').forEach(thumb => thumb.classList.remove('selected'));
-
-            // Add "selected" class to the clicked thumbnail
-            document.querySelectorAll('.thumbnail')[index - 1].classList.add('selected');
+        for (let i = 1; i <= watchThumbs.length; i++) {
+            const img = new Image();
+            img.src = `./assets/watch${i}.png`;
+            watches.push(img);
         }
-    </script>
 
+        let currentARWatch = watches[0];
+
+        function setWatch(index) {
+            currentARWatch = watches[index];
+            // Remove "selected" class from all thumbnails
+            document.querySelectorAll('.watch-thumb').forEach(thumb => {
+                thumb.classList.remove('selected');
+            });
+
+            // Add "selected" class to the active one
+            document.querySelector(`.watch-thumb[data-index="${index}"]`).classList.add('selected');
+        }
+
+        let lastX = 0, lastY = 0;
+
+        const hands = new Hands({
+            locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+        });
+
+        hands.setOptions({
+            maxNumHands: 1,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.7,
+            minTrackingConfidence: 0.7
+        });
+
+        hands.onResults(results => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                const landmarks = results.multiHandLandmarks[0];
+                const wrist = landmarks[0];
+                const middleFingerBase = landmarks[9];
+
+                const x = wrist.x * canvas.width;
+                const y = wrist.y * canvas.height;
+                const x2 = middleFingerBase.x * canvas.width;
+                const y2 = middleFingerBase.y * canvas.height;
+
+                const angle = Math.atan2(y2 - y, x2 - x);
+                const dist = Math.hypot(x2 - x, y2 - y);
+
+                // Smoothing
+                lastX = lastX * 0.8 + x * 0.2;
+                lastY = lastY * 0.8 + y * 0.2;
+
+                const size = dist * 1.1;
+
+                ctx.save();
+                ctx.translate(lastX, lastY);
+                ctx.rotate(angle);
+                ctx.drawImage(currentARWatch, -size / 2, -size / 2, size, size);
+                ctx.restore();
+            }
+        });
+
+        const camera = new Camera(video, {
+            onFrame: async () => {
+                await hands.send({ image: video });
+            },
+            width: 640,
+            height: 667
+        });
+
+        camera.start();
+    </script>
 </body>
 
 </html>
