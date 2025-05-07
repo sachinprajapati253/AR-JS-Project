@@ -13,7 +13,7 @@
         .mainar {
             position: relative;
             width: 100vw;
-            height: 100vh;
+            height: 680px;
             overflow: hidden;
         }
 
@@ -170,34 +170,33 @@
         });
 
 
-        // Get available video devices (cameras)
+        // Get video input devices
         navigator.mediaDevices.enumerateDevices()
             .then(devices => {
-                // Find the back camera by checking the device kind and label
-                const backCamera = devices.find(device => device.kind === 'videoinput' && device.label.toLowerCase().includes('back'));
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                const backCam = videoDevices.find(d => d.label.toLowerCase().includes('back')) || videoDevices[0];
 
-                // If back camera exists, start the camera with the back camera
-                if (backCamera) {
-                    startCamera(backCamera.deviceId);
-                } else {
-                    // Fallback to front camera if back camera is not found
-                    startCamera(devices[0].deviceId); // Default to front camera
-                }
+                return navigator.mediaDevices.getUserMedia({
+                    video: {
+                        deviceId: { exact: backCam.deviceId }
+                    },
+                    audio: false
+                });
             })
-            .catch(err => console.error("Error accessing devices: ", err));
+            .then(stream => {
+                video.srcObject = stream;
+                video.play();
 
-        function startCamera(deviceId) {
-            const camera = new Camera(video, {
-                onFrame: async () => {
-                    await pose.send({ image: video });
-                },
-                width: window.innerWidth,
-                height: window.innerHeight,
-                deviceId: deviceId // Use the selected deviceId (back camera)
-            });
-
-            camera.start();
-        }
+                // Process each frame manually
+                const onFrame = async () => {
+                    if (video.readyState === 4) {
+                        await pose.send({ image: video });
+                    }
+                    requestAnimationFrame(onFrame);
+                };
+                onFrame();
+            })
+            .catch(err => console.error("Camera access error:", err));
 
     </script>
 </body>
