@@ -11,23 +11,24 @@
         }
 
         .mainar {
-            width: 640px;
-            height: 667px;
             position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
         }
 
         canvas,
         video {
             position: absolute;
-            top: 0;
-            left: 0;
+            width: 100%;
+            height: 100%;
         }
 
         .title {
             position: absolute;
             top: 1%;
-            left: 40%;
-            transform: translateX(-40%);
+            left: 50%;
+            transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.5);
             color: #fff;
             padding: 4px;
@@ -36,14 +37,13 @@
             width: 80%;
             margin: 10px;
             text-align: center;
-
         }
 
         #watch-picker {
             position: absolute;
             bottom: 3%;
-            left: 40%;
-            transform: translateX(-40%);
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
             gap: 10px;
             background: rgba(0, 0, 0, 0.5);
@@ -66,7 +66,6 @@
         .watch-thumb.selected {
             transform: scale(1.1);
             border: 2px solid white;
-
         }
     </style>
 </head>
@@ -87,7 +86,8 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <!-- Load MediaPipe Pose and Camera Utils -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
     <script>
@@ -95,9 +95,9 @@
         const canvas = document.querySelector(".output_canvas");
         const ctx = canvas.getContext("2d");
         const watchThumbs = document.querySelectorAll(".watch-thumb");
-        const watches = [];
 
-        for (let i = 1; i <= watchThumbs.length; i++) {
+        const watches = [];
+        for (let i = 1; i <= 5; i++) {
             const img = new Image();
             img.src = `./assets/watch${i}.png`;
             watches.push(img);
@@ -107,70 +107,98 @@
 
         function setWatch(index) {
             currentARWatch = watches[index];
-            // Remove "selected" class from all thumbnails
-            document.querySelectorAll('.watch-thumb').forEach(thumb => {
-                thumb.classList.remove('selected');
-            });
-
-            // Add "selected" class to the active one
+            document.querySelectorAll('.watch-thumb').forEach(thumb => thumb.classList.remove('selected'));
             document.querySelector(`.watch-thumb[data-index="${index}"]`).classList.add('selected');
         }
 
         let lastX = 0, lastY = 0;
 
-        const hands = new Hands({
-            locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-        });
-
-        hands.setOptions({
-            maxNumHands: 1,
-            modelComplexity: 1,
-            minDetectionConfidence: 0.7,
-            minTrackingConfidence: 0.7
-        });
-
-        hands.onResults(results => {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
-
-            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                const landmarks = results.multiHandLandmarks[0];
-                const wrist = landmarks[0];
-                const middleFingerBase = landmarks[9];
-
-                const x = wrist.x * canvas.width;
-                const y = wrist.y * canvas.height;
-                const x2 = middleFingerBase.x * canvas.width;
-                const y2 = middleFingerBase.y * canvas.height;
-
-                const angle = Math.atan2(y2 - y, x2 - x);
-                const dist = Math.hypot(x2 - x, y2 - y);
-
-                // Smoothing
-                lastX = lastX * 0.8 + x * 0.2;
-                lastY = lastY * 0.8 + y * 0.2;
-
-                const size = dist * 1.1;
-
-                ctx.save();
-                ctx.translate(lastX, lastY);
-                ctx.rotate(angle);
-                ctx.drawImage(currentARWatch, -size / 2, -size / 2, size, size);
-                ctx.restore();
+        const pose = new Pose({
+            locateFile: (file) => {
+                return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
             }
         });
 
-        const camera = new Camera(video, {
-            onFrame: async () => {
-                await hands.send({ image: video });
-            },
-            width: 640,
-            height: 667
+        pose.setOptions({
+            modelComplexity: 1,
+            smoothLandmarks: true,
+            enableSegmentation: false,
+            smoothSegmentation: false,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
         });
 
-        camera.start();
+        pose.onResults((results) => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+
+            if (results.poseLandmarks) {
+                const landmarks = results.poseLandmarks;
+
+                const wrist = landmarks[15];
+                const elbow = landmarks[13];
+                const shoulder = landmarks[11]; // Shoulder landmark
+
+                const x = wrist.x * canvas.width;
+                const y = wrist.y * canvas.height;
+                const x2 = elbow.x * canvas.width;
+                const y2 = elbow.y * canvas.height;
+                // Add the visibility and position check here
+                if (wrist.visibility > 0.8 && elbow.visibility > 0.8 && wrist.y > shoulder.y) {
+                    const angle = Math.atan2(y2 - y, x2 - x);
+                    const dist = Math.hypot(x2 - x, y2 - y);
+
+                    // Smoother motion
+                    lastX = lastX * 0.9 + x * 0.1;
+                    lastY = lastY * 0.9 + y * 0.1;
+
+                    const size = dist * 0.6; // Smaller, more natural scale
+
+                    // Adjusting position to the back of the wrist, aligning better with the wrist's back position
+                    const offsetX = 0; // Fine-tune this if needed for wrist positioning
+                    const offsetY = 10; // Adjust to keep watch slightly above wrist
+
+                    ctx.save();
+                    ctx.translate(lastX + offsetX, lastY + offsetY);
+                    ctx.rotate(angle);
+                    ctx.drawImage(currentARWatch, -size / 2, -size / 2.5, size, size); // Slight upward shift
+                    ctx.restore();
+                }
+            }
+        });
+
+
+        // Get available video devices (cameras)
+        navigator.mediaDevices.enumerateDevices()
+            .then(devices => {
+                // Find the back camera by checking the device kind and label
+                const backCamera = devices.find(device => device.kind === 'videoinput' && device.label.toLowerCase().includes('back'));
+
+                // If back camera exists, start the camera with the back camera
+                if (backCamera) {
+                    startCamera(backCamera.deviceId);
+                } else {
+                    // Fallback to front camera if back camera is not found
+                    startCamera(devices[0].deviceId); // Default to front camera
+                }
+            })
+            .catch(err => console.error("Error accessing devices: ", err));
+
+        function startCamera(deviceId) {
+            const camera = new Camera(video, {
+                onFrame: async () => {
+                    await pose.send({ image: video });
+                },
+                width: window.innerWidth,
+                height: window.innerHeight,
+                deviceId: deviceId // Use the selected deviceId (back camera)
+            });
+
+            camera.start();
+        }
+
     </script>
 </body>
 
