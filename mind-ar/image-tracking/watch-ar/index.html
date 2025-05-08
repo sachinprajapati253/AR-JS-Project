@@ -216,7 +216,8 @@
                 await pose.send({ image: video });
             },
             width: 640,
-            height: 667
+            height: 667,
+            facingMode: 'environment' // <-- Use rear camera
         });
 
         camera.start();
