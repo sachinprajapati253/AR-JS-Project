@@ -71,6 +71,10 @@
             max-height: 80vh;
         }
 
+        .watchonwrist {
+            object-fit: contain;
+        }
+
         .swiper-container {
             width: 80%;
             height: 100px;
@@ -155,7 +159,7 @@
         let centerX, centerY;
         let scale = 1;
         let angle = 0; // in degrees
-        const baseWidth = 200;
+        const baseWidth = 100;
         const baseHeight = 100;
         let isDragging = false;
         let isResizing = false;
@@ -245,6 +249,7 @@
                 dCtx.drawImage(wristImage, 0, 0);
                 const watchImg = new Image();
                 watchImg.src = currentWatchSrc;
+                watchImg.className = "watchonwrist";
                 watchImg.onload = () => {
                     const currentWidth = baseWidth * scale;
                     const currentHeight = baseHeight * scale;
