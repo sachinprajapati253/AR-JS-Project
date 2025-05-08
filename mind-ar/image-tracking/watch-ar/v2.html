@@ -75,21 +75,27 @@
             width: 80%;
             height: 100px;
             margin-top: 20px;
+            overflow: hidden;
         }
 
         .swiper-slide {
             text-align: center;
             font-size: 18px;
-            background: #fff;
             display: flex;
             justify-content: center;
             align-items: center;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
         }
 
         .swiper-slide img {
             width: 80px;
-            height: 40px;
+            height: 80px;
+            object-fit: contain;
+            border-radius: 6px;
             cursor: pointer;
+            transition: transform 0.2s, border 0.2s;
+            border: 2px solid transparent;
         }
     </style>
 </head>
@@ -157,8 +163,14 @@
         let startX, startY;
         let initialCenterX, initialCenterY;
         let initialScale;
+        let startAngle;
         let initialAngle;
         let currentWatchSrc = './assets/watch1.png'; // Default watch
+
+        // Detect touch device
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        const handleRadius = isTouchDevice ? 20 : 10;
+        const handleOffset = handleRadius;
 
         // Screen transitions
         function goToScreen2() {
@@ -179,9 +191,11 @@
             document.getElementById('screen4').classList.remove('hidden');
         }
 
-        // Start camera and draw on canvas
+        // Start camera and draw on canvas (prefer back camera)
         function startCamera() {
-            navigator.mediaDevices.getUserMedia({ video: true })
+            navigator.mediaDevices.getUserMedia({
+                video: { facingMode: { ideal: 'environment' } }
+            })
                 .then(stream => {
                     video.srcObject = stream;
                     video.play();
@@ -242,13 +256,13 @@
                     // Draw resize handle (bottom-right corner)
                     dCtx.fillStyle = 'red';
                     dCtx.beginPath();
-                    dCtx.arc(currentWidth / 2 + 10, currentHeight / 2 + 10, 10, 0, 2 * Math.PI);
+                    dCtx.arc(currentWidth / 2 + handleOffset, currentHeight / 2 + handleOffset, handleRadius, 0, 2 * Math.PI);
                     dCtx.fill();
 
                     // Draw rotate handle (top-right corner)
                     dCtx.fillStyle = 'blue';
                     dCtx.beginPath();
-                    dCtx.arc(currentWidth / 2 + 10, -currentHeight / 2 - 10, 10, 0, 2 * Math.PI);
+                    dCtx.arc(currentWidth / 2 + handleOffset, -currentHeight / 2 - handleOffset, handleRadius, 0, 2 * Math.PI);
                     dCtx.fill();
 
                     dCtx.restore();
@@ -271,6 +285,18 @@
             });
         }
 
+        // Get canvas coordinates accounting for scaling
+        function getCanvasCoordinates(event) {
+            const rect = displayCanvas.getBoundingClientRect();
+            const scaleX = displayCanvas.width / rect.width;
+            const scaleY = displayCanvas.height / rect.height;
+            const clientX = event.type.includes('touch') ? event.touches[0].clientX : event.clientX;
+            const clientY = event.type.includes('touch') ? event.touches[0].clientY : event.clientY;
+            const x = (clientX - rect.left) * scaleX;
+            const y = (clientY - rect.top) * scaleY;
+            return { x, y };
+        }
+
         // Event listeners for touch and mouse events
         displayCanvas.addEventListener('mousedown', handleStart);
         displayCanvas.addEventListener('touchstart', handleStart);
@@ -281,10 +307,7 @@
 
         function handleStart(e) {
             e.preventDefault();
-            const { clientX, clientY } = e.type.includes('touch') ? e.touches[0] : e;
-            const rect = displayCanvas.getBoundingClientRect();
-            const mouseX = clientX - rect.left;
-            const mouseY = clientY - rect.top;
+            const { x: mouseX, y: mouseY } = getCanvasCoordinates(e);
 
             // Transform mouse coordinates to watch's rotated coordinate system
             const dx = mouseX - centerX;
@@ -296,24 +319,24 @@
             const currentHeight = baseHeight * scale;
 
             // Check for resize handle (bottom-right)
-            const resizeX = currentWidth / 2 + 10;
-            const resizeY = currentHeight / 2 + 10;
-            if (Math.hypot(transformedX - resizeX, transformedY - resizeY) < 15) {
+            const resizeX = currentWidth / 2 + handleOffset;
+            const resizeY = currentHeight / 2 + handleOffset;
+            if (Math.hypot(transformedX - resizeX, transformedY - resizeY) < handleRadius) {
                 isResizing = true;
                 startX = mouseX;
-                startY = mouseY;
                 initialScale = scale;
                 return;
             }
 
             // Check for rotate handle (top-right)
-            const rotateX = currentWidth / 2 + 10;
-            const rotateY = -currentHeight / 2 - 10;
-            if (Math.hypot(transformedX - rotateX, transformedY - rotateY) < 15) {
+            const rotateX = currentWidth / 2 + handleOffset;
+            const rotateY = -currentHeight / 2 - handleOffset;
+            if (Math.hypot(transformedX - rotateX, transformedY - rotateY) < handleRadius) {
                 isRotating = true;
-                startX = mouseX;
-                startY = mouseY;
-                initialAngle = angle;
+                const dxRot = mouseX - centerX;
+                const dyRot = mouseY - centerY;
+                initialAngle = Math.atan2(dyRot, dxRot) * 180 / Math.PI;
+                startAngle = angle;
                 return;
             }
 
@@ -329,10 +352,7 @@
 
         function handleMove(e) {
             e.preventDefault();
-            const { clientX, clientY } = e.type.includes('touch') ? e.touches[0] : e;
-            const rect = displayCanvas.getBoundingClientRect();
-            const currentX = clientX - rect.left;
-            const currentY = clientY - rect.top;
+            const { x: currentX, y: currentY } = getCanvasCoordinates(e);
 
             if (isDragging) {
                 const dx = currentX - startX;
@@ -342,12 +362,13 @@
                 drawWatch();
             } else if (isResizing) {
                 const dx = currentX - startX;
-                scale = Math.max(0.5, initialScale + dx / 100);
+                scale = Math.max(0.5, Math.min(2, initialScale + dx / 100));
                 drawWatch();
             } else if (isRotating) {
                 const dx = currentX - centerX;
                 const dy = currentY - centerY;
-                angle = initialAngle + Math.atan2(dy, dx) * 180 / Math.PI;
+                const currentAngle = Math.atan2(dy, dx) * 180 / Math.PI;
+                angle = startAngle + (currentAngle - initialAngle);
                 drawWatch();
             }
         }
