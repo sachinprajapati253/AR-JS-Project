@@ -103,8 +103,8 @@
             <h5>Lift your wrist to experience the virtual watch try-on</h5>
         </div>
         <div class="status" id="status-text">Recognising...</div>
-        <video class="input_video" autoplay muted playsinline></video>
-        <canvas class="output_canvas"></canvas>
+        <video id="video" autoplay muted playsinline></video>
+        <canvas id="canvas"></canvas>
         <div id="watch-picker">
             <img class="watch-thumb selected" src="./assets/watch1.png" data-index="0" onclick="setWatch(0)"
                 alt="Watch 1">
@@ -115,22 +115,21 @@
         </div>
     </div>
 
-    <!-- Load MediaPipe Pose and Camera Utils -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+    <!-- Load MediaPipe Hands and Camera Utils -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
     <script>
-        const video = document.querySelector(".input_video");
-        const canvas = document.querySelector(".output_canvas");
+        const video = document.getElementById("video");
+        const canvas = document.getElementById("canvas");
         const ctx = canvas.getContext("2d");
-        const statusText = document.querySelector("#status-text");
+        const statusText = document.getElementById("status-text");
 
         const watches = Array.from({ length: 5 }, (_, i) => {
             const img = new Image();
             img.src = `./assets/watch${i + 1}.png`;
             return img;
         });
-
         let currentARWatch = watches[0];
 
         function setWatch(index) {
@@ -139,21 +138,21 @@
             document.querySelector(`.watch-thumb[data-index="${index}"]`).classList.add('selected');
         }
 
-        let lastX = 0, lastY = 0;
+        let lastX = 0, lastY = 0, lastAngle = 0;
 
-        const pose = new Pose({
-            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+        const hands = new Hands({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
         });
 
-        pose.setOptions({
+        hands.setOptions({
+            maxNumHands: 2,
             modelComplexity: 1,
-            smoothLandmarks: true,
-            enableSegmentation: false,
             minDetectionConfidence: 0.5,
             minTrackingConfidence: 0.5
         });
 
-        pose.onResults((results) => {
+        hands.onResults((results) => {
+            // Adjust canvas size to match video aspect ratio
             const videoWidth = video.videoWidth;
             const videoHeight = video.videoHeight;
             const aspectRatio = videoWidth / videoHeight;
@@ -169,56 +168,55 @@
                 canvasWidth = containerWidth;
                 canvasHeight = canvasWidth / aspectRatio;
             }
+            canvas.width = Math.round(canvasWidth);
+            canvas.height = Math.round(canvasHeight);
 
-            canvas.width = canvasWidth;
-            canvas.height = canvasHeight;
-
+            // Clear and draw video frame
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            if (results.poseLandmarks) {
-                const landmarks = results.poseLandmarks;
-                const leftWrist = landmarks[15];
-                const leftElbow = landmarks[13];
-                const rightWrist = landmarks[16];
-                const rightElbow = landmarks[14];
-
-                let wrist, elbow;
-                if (leftWrist.visibility > rightWrist.visibility) {
-                    wrist = leftWrist;
-                    elbow = leftElbow;
-                } else {
-                    wrist = rightWrist;
-                    elbow = rightElbow;
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                // Select the hand with the most visible wrist
+                let bestHand = null;
+                let bestWristConfidence = 0;
+                for (const landmarks of results.multiHandLandmarks) {
+                    const wrist = landmarks[0]; // Wrist landmark
+                    if (wrist.z < bestWristConfidence) { // Lower z indicates higher confidence
+                        bestHand = landmarks;
+                        bestWristConfidence = wrist.z;
+                    }
                 }
 
-                if (wrist.visibility > 0.5 && elbow.visibility > 0.5) {
+                if (bestHand) {
                     statusText.textContent = "Wrist Detected!";
+                    const wrist = bestHand[0]; // Wrist
+                    const mcp = bestHand[9]; // Middle finger MCP (for orientation)
+
                     const x = wrist.x * canvas.width;
                     const y = wrist.y * canvas.height;
-                    const x2 = elbow.x * canvas.width;
-                    const y2 = elbow.y * canvas.height;
+                    const x2 = mcp.x * canvas.width;
+                    const y2 = mcp.y * canvas.height;
 
-                    const angle = Math.atan2(y2 - y, x2 - x);
-                    const dist = Math.hypot(x2 - x, y2 - y);
-
+                    // Smooth position
                     lastX = lastX * 0.9 + x * 0.1;
                     lastY = lastY * 0.9 + y * 0.1;
 
-                    const size = dist * 0.6;
-                    const offsetX = 0;
-                    const offsetY = 10;
+                    // Calculate angle and size
+                    const angle = Math.atan2(y2 - y, x2 - x);
+                    lastAngle = lastAngle * 0.9 + angle * 0.1;
+                    const dist = Math.hypot(x2 - x, y2 - y);
+                    const watchSize = dist * 1; // Adjust multiplier for watch size
 
-                    // Draw watch if image is loaded
+                    // Draw watch
                     if (currentARWatch.complete) {
                         ctx.save();
-                        ctx.translate(lastX + offsetX, lastY + offsetY);
-                        ctx.rotate(angle);
-                        ctx.drawImage(currentARWatch, -size / 2, -size / 2.5, size, size);
+                        ctx.translate(lastX, lastY);
+                        ctx.rotate(lastAngle);
+                        ctx.drawImage(currentARWatch, -watchSize / 2, -watchSize / 2, watchSize, watchSize);
                         ctx.restore();
                     }
 
-                    // Draw red dot at wrist for debugging
+                    // Debugging dot at wrist
                     ctx.beginPath();
                     ctx.arc(x, y, 5, 0, 2 * Math.PI);
                     ctx.fillStyle = 'red';
@@ -233,14 +231,35 @@
 
         const camera = new Camera(video, {
             onFrame: async () => {
-                await pose.send({ image: video });
+                await hands.send({ image: video });
             },
             width: 640,
-            height: 667,
-            facingMode: 'environment' // Use rear camera
+            height: 480,
+            facingMode: 'environment' // Use back camera
         });
 
         camera.start();
+
+        window.addEventListener('resize', () => {
+            // Update canvas size on resize
+            const videoWidth = video.videoWidth;
+            const videoHeight = video.videoHeight;
+            const aspectRatio = videoWidth / videoHeight;
+            const containerWidth = window.innerWidth;
+            const containerHeight = window.innerHeight;
+            const containerAspectRatio = containerWidth / containerHeight;
+
+            let canvasWidth, canvasHeight;
+            if (containerAspectRatio > aspectRatio) {
+                canvasHeight = containerHeight;
+                canvasWidth = canvasHeight * aspectRatio;
+            } else {
+                canvasWidth = containerWidth;
+                canvasHeight = canvasWidth / aspectRatio;
+            }
+            canvas.width = Math.round(canvasWidth);
+            canvas.height = Math.round(canvasHeight);
+        });
     </script>
 </body>
 
