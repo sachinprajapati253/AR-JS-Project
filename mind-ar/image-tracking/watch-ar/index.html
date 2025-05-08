@@ -178,10 +178,21 @@
 
             if (results.poseLandmarks) {
                 const landmarks = results.poseLandmarks;
-                const wrist = landmarks[15];
-                const elbow = landmarks[13];
+                const leftWrist = landmarks[15];
+                const leftElbow = landmarks[13];
+                const rightWrist = landmarks[16];
+                const rightElbow = landmarks[14];
 
-                if (wrist.visibility > 0.8 && elbow.visibility > 0.8) {
+                let wrist, elbow;
+                if (leftWrist.visibility > rightWrist.visibility) {
+                    wrist = leftWrist;
+                    elbow = leftElbow;
+                } else {
+                    wrist = rightWrist;
+                    elbow = rightElbow;
+                }
+
+                if (wrist.visibility > 0.5 && elbow.visibility > 0.5) {
                     statusText.textContent = "Wrist Detected!";
                     const x = wrist.x * canvas.width;
                     const y = wrist.y * canvas.height;
@@ -198,11 +209,20 @@
                     const offsetX = 0;
                     const offsetY = 10;
 
-                    ctx.save();
-                    ctx.translate(lastX + offsetX, lastY + offsetY);
-                    ctx.rotate(angle);
-                    ctx.drawImage(currentARWatch, -size / 2, -size / 2.5, size, size);
-                    ctx.restore();
+                    // Draw watch if image is loaded
+                    if (currentARWatch.complete) {
+                        ctx.save();
+                        ctx.translate(lastX + offsetX, lastY + offsetY);
+                        ctx.rotate(angle);
+                        ctx.drawImage(currentARWatch, -size / 2, -size / 2.5, size, size);
+                        ctx.restore();
+                    }
+
+                    // Draw red dot at wrist for debugging
+                    ctx.beginPath();
+                    ctx.arc(x, y, 5, 0, 2 * Math.PI);
+                    ctx.fillStyle = 'red';
+                    ctx.fill();
                 } else {
                     statusText.textContent = "Scanning...";
                 }
@@ -217,11 +237,10 @@
             },
             width: 640,
             height: 667,
-            facingMode: 'environment' // <-- Use rear camera
+            facingMode: 'environment' // Use rear camera
         });
 
         camera.start();
-
     </script>
 </body>
 
