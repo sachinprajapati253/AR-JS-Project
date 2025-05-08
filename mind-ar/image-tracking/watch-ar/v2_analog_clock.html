@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wear the Legacy - AR Try-On</title>
+    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        .screen {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        #screen1 {
+            background: #f0f0f0;
+        }
+
+        #screen2,
+        #screen3 {
+            background: #000;
+        }
+
+        #screen4 {
+            background: #f0f0f0;
+        }
+
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            text-align: center;
+            margin: 0 20px;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            cursor: pointer;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            margin: 10px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        #canvas,
+        #displayCanvas {
+            max-width: 100%;
+            max-height: 80vh;
+        }
+
+        .watchonwrist {
+            object-fit: contain;
+        }
+
+        .swiper-container {
+            width: 80%;
+            height: 100px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .swiper-slide {
+            text-align: center;
+            font-size: 18px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .swiper-slide img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.2s, border 0.2s;
+            border: 2px solid transparent;
+        }
+
+        /* Clock hands styling */
+        .clock-hand {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            transform-origin: bottom center;
+            background-color: yellow;
+            width: 2px;
+            height: 20px;
+        }
+
+        .hour-hand {
+            height: 12px;
+        }
+
+        .minute-hand {
+            height: 17px;
+        }
+
+        .second-hand {
+            height: 20px;
+            background-color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Screen 1: Welcome -->
+    <div id="screen1" class="screen">
+        <h1>Experience Time in Your Hands</h1>
+        <button onclick="goToScreen2()">Try Now</button>
+    </div>
+
+    <!-- Screen 2: Assembly -->
+    <div id="screen2" class="screen hidden">
+        <canvas id="canvas"></canvas>
+        <button onclick="captureImage()">Capture</button>
+    </div>
+
+    <!-- Screen 3: Try-On -->
+    <div id="screen3" class="screen hidden">
+        <canvas id="displayCanvas"></canvas>
+        <div class="swiper-container">
+            <div class="swiper-wrapper">
+                <div class="swiper-slide">
+                    <img src="./assets/watch1.png" onclick="changeWatch('./assets/watch1.png')">
+                    <div class="clock-hand hour-hand"></div>
+                    <div class="clock-hand minute-hand"></div>
+                    <div class="clock-hand second-hand"></div>
+                </div>
+                <div class="swiper-slide">
+                    <img src="./assets/watch2.png" onclick="changeWatch('./assets/watch2.png')">
+                    <div class="clock-hand hour-hand"></div>
+                    <div class="clock-hand minute-hand"></div>
+                    <div class="clock-hand second-hand"></div>
+                </div>
+                <div class="swiper-slide">
+                    <img src="./assets/watch3.png" onclick="changeWatch('./assets/watch3.png')">
+                    <div class="clock-hand hour-hand"></div>
+                    <div class="clock-hand minute-hand"></div>
+                    <div class="clock-hand second-hand"></div>
+                </div>
+                <div class="swiper-slide">
+                    <img src="./assets/watch4.png" onclick="changeWatch('./assets/watch4.png')">
+                    <div class="clock-hand hour-hand"></div>
+                    <div class="clock-hand minute-hand"></div>
+                    <div class="clock-hand second-hand"></div>
+                </div>
+                <div class="swiper-slide">
+                    <img src="./assets/watch5.png" onclick="changeWatch('./assets/watch5.png')">
+                    <div class="clock-hand hour-hand"></div>
+                    <div class="clock-hand minute-hand"></div>
+                    <div class="clock-hand second-hand"></div>
+                </div>
+            </div>
+        </div>
+        <button onclick="goToScreen4()">Done</button>
+    </div>
+
+    <!-- Screen 4: Final -->
+    <div id="screen4" class="screen hidden">
+        <button>Explore More</button>
+    </div>
+
+    <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+    <script>
+        // Video element (hidden but needed for stream)
+        const video = document.createElement('video');
+        video.style.display = 'none';
+        document.body.appendChild(video);
+
+        // Canvas variables for Screen 2
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Canvas variables for Screen 3
+        const displayCanvas = document.getElementById('displayCanvas');
+        const dCtx = displayCanvas.getContext('2d');
+        let centerX, centerY;
+        let scale = 1;
+        let angle = 0; // in degrees
+        const baseWidth = 100;
+        const baseHeight = 100;
+        let isDragging = false;
+        let isResizing = false;
+        let isRotating = false;
+        let startX, startY;
+        let initialCenterX, initialCenterY;
+        let initialScale;
+        let startAngle;
+        let initialAngle;
+        let currentWatchSrc = './assets/watch1.png'; // Default watch
+
+        // Detect touch device
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        const handleRadius = isTouchDevice ? 20 : 10;
+        const handleOffset = handleRadius;
+
+        // Screen transitions
+        function goToScreen2() {
+            document.getElementById('screen1').classList.add('hidden');
+            document.getElementById('screen2').classList.remove('hidden');
+            startCamera();
+        }
+
+        function goToScreen3() {
+            document.getElementById('screen2').classList.add('hidden');
+            document.getElementById('screen3').classList.remove('hidden');
+            displayCapturedImage();
+            initSwiper();
+        }
+
+        function goToScreen4() {
+            document.getElementById('screen3').classList.add('hidden');
+            document.getElementById('screen4').classList.remove('hidden');
+        }
+
+        // Start camera and draw on canvas (prefer back camera)
+        function startCamera() {
+            navigator.mediaDevices.getUserMedia({
+                video: { facingMode: { ideal: 'environment' } }
+            })
+                .then(stream => {
+                    video.srcObject = stream;
+                    video.play();
+                    canvas.width = video.videoWidth || 640;
+                    canvas.height = video.videoHeight || 480;
+                    drawCanvas();
+                })
+                .catch(err => console.error('Camera error:', err));
+        }
+
+        function drawCanvas() {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            requestAnimationFrame(drawCanvas);
+        }
+
+        // Capture image
+        function captureImage() {
+            const videoCanvas = document.createElement('canvas');
+            videoCanvas.width = video.videoWidth;
+            videoCanvas.height = video.videoHeight;
+            const vCtx = videoCanvas.getContext('2d');
+            vCtx.drawImage(video, 0, 0);
+            localStorage.setItem('wristImage', videoCanvas.toDataURL('image/png'));
+            video.srcObject.getTracks().forEach(track => track.stop());
+            goToScreen3();
+        }
+
+        // Display captured image with watch overlay
+        function displayCapturedImage() {
+            const wristImage = new Image();
+            wristImage.src = localStorage.getItem('wristImage');
+            wristImage.onload = () => {
+                displayCanvas.width = wristImage.width;
+                displayCanvas.height = wristImage.height;
+                centerX = displayCanvas.width / 2;
+                centerY = displayCanvas.height / 2;
+                drawWatch();
+            };
+        }
+
+        // Draw watch on displayCanvas with handles and clock hands
+        function drawWatch() {
+            const wristImage = new Image();
+            wristImage.src = localStorage.getItem('wristImage');
+            wristImage.onload = () => {
+                dCtx.clearRect(0, 0, displayCanvas.width, displayCanvas.height);
+                dCtx.drawImage(wristImage, 0, 0);
+                const watchImg = new Image();
+                watchImg.src = currentWatchSrc;
+                watchImg.className = "watchonwrist";
+                watchImg.onload = () => {
+                    const currentWidth = baseWidth * scale;
+                    const currentHeight = baseHeight * scale;
+                    dCtx.save();
+                    dCtx.translate(centerX, centerY);
+                    dCtx.rotate(angle * Math.PI / 180);
+                    dCtx.drawImage(watchImg, -currentWidth / 2, -currentHeight / 2, currentWidth, currentHeight);
+
+                    // Draw clock hands
+                    const now = new Date();
+                    const hours = now.getHours() % 12;
+                    const minutes = now.getMinutes();
+                    const seconds = now.getSeconds();
+
+                    const hourAngle = (hours * 30) + (minutes / 2);
+                    const minuteAngle = (minutes * 6) + (seconds / 10);
+                    const secondAngle = seconds * 6;
+
+                    // Hour hand
+                    dCtx.save();
+                    dCtx.rotate(hourAngle * Math.PI / 180);
+                    dCtx.fillStyle = 'yellow';
+                    dCtx.fillRect(-1, -currentHeight / 6, 2, currentHeight / 6);
+                    dCtx.restore();
+
+                    // Minute hand
+                    dCtx.save();
+                    dCtx.rotate(minuteAngle * Math.PI / 180);
+                    dCtx.fillStyle = 'yellow';
+                    dCtx.fillRect(-1, -currentHeight / 5, 2, currentHeight / 5);
+                    dCtx.restore();
+
+                    // Second hand
+                    dCtx.save();
+                    dCtx.rotate(secondAngle * Math.PI / 180);
+                    dCtx.fillStyle = 'red';
+                    dCtx.fillRect(-1, -currentHeight / 4.5, 2, currentHeight / 4.5);
+                    dCtx.restore();
+
+                    // Draw resize handle (bottom-right corner)
+                    dCtx.fillStyle = 'red';
+                    dCtx.beginPath();
+                    dCtx.arc(currentWidth / 2 + handleOffset, currentHeight / 2 + handleOffset, handleRadius, 0, 2 * Math.PI);
+                    dCtx.fill();
+
+                    // Draw rotate handle (top-right corner)
+                    dCtx.fillStyle = 'blue';
+                    dCtx.beginPath();
+                    dCtx.arc(currentWidth / 2 + handleOffset, -currentHeight / 2 - handleOffset, handleRadius, 0, 2 * Math.PI);
+                    dCtx.fill();
+
+                    dCtx.restore();
+                };
+            };
+        }
+
+        // Change watch style
+        function changeWatch(src) {
+            currentWatchSrc = src;
+            drawWatch();
+        }
+
+        // Initialize Swiper carousel
+        function initSwiper() {
+            new Swiper('.swiper-container', {
+                slidesPerView: 3,
+                spaceBetween: 10,
+                loop: true
+            });
+        }
+
+        // Get canvas coordinates accounting for scaling
+        function getCanvasCoordinates(event) {
+            const rect = displayCanvas.getBoundingClientRect();
+            const scaleX = displayCanvas.width / rect.width;
+            const scaleY = displayCanvas.height / rect.height;
+            const clientX = event.type.includes('touch') ? event.touches[0].clientX : event.clientX;
+            const clientY = event.type.includes('touch') ? event.touches[0].clientY : event.clientY;
+            const x = (clientX - rect.left) * scaleX;
+            const y = (clientY - rect.top) * scaleY;
+            return { x, y };
+        }
+
+        // Event listeners for touch and mouse events
+        displayCanvas.addEventListener('mousedown', handleStart);
+        displayCanvas.addEventListener('touchstart', handleStart);
+        displayCanvas.addEventListener('mousemove', handleMove);
+        displayCanvas.addEventListener('touchmove', handleMove);
+        displayCanvas.addEventListener('mouseup', handleEnd);
+        displayCanvas.addEventListener('touchend', handleEnd);
+
+        function handleStart(e) {
+            e.preventDefault();
+            const { x: mouseX, y: mouseY } = getCanvasCoordinates(e);
+
+            // Transform mouse coordinates to watch's rotated coordinate system
+            const dx = mouseX - centerX;
+            const dy = mouseY - centerY;
+            const rad = -angle * Math.PI / 180;
+            const transformedX = dx * Math.cos(rad) - dy * Math.sin(rad);
+            const transformedY = dx * Math.sin(rad) + dy * Math.cos(rad);
+            const currentWidth = baseWidth * scale;
+            const currentHeight = baseHeight * scale;
+
+            // Check for resize handle (bottom-right)
+            const resizeX = currentWidth / 2 + handleOffset;
+            const resizeY = currentHeight / 2 + handleOffset;
+            if (Math.hypot(transformedX - resizeX, transformedY - resizeY) < handleRadius) {
+                isResizing = true;
+                startX = mouseX;
+                initialScale = scale;
+                return;
+            }
+
+            // Check for rotate handle (top-right)
+            const rotateX = currentWidth / 2 + handleOffset;
+            const rotateY = -currentHeight / 2 - handleOffset;
+            if (Math.hypot(transformedX - rotateX, transformedY - rotateY) < handleRadius) {
+                isRotating = true;
+                const dxRot = mouseX - centerX;
+                const dyRot = mouseY - centerY;
+                initialAngle = Math.atan2(dyRot, dxRot) * 180 / Math.PI;
+                startAngle = angle;
+                return;
+            }
+
+            // Check if within watch bounds for dragging
+            if (Math.abs(transformedX) < currentWidth / 2 && Math.abs(transformedY) < currentHeight / 2) {
+                isDragging = true;
+                startX = mouseX;
+                startY = mouseY;
+                initialCenterX = centerX;
+                initialCenterY = centerY;
+            }
+        }
+
+        function handleMove(e) {
+            e.preventDefault();
+            const { x: currentX, y: currentY } = getCanvasCoordinates(e);
+
+            if (isDragging) {
+                const dx = currentX - startX;
+                const dy = currentY - startY;
+                centerX = initialCenterX + dx;
+                centerY = initialCenterY + dy;
+                drawWatch();
+            } else if (isResizing) {
+                const dx = currentX - startX;
+                scale = Math.max(0.5, Math.min(3, initialScale + dx / 100));
+                drawWatch();
+            } else if (isRotating) {
+                const dx = currentX - centerX;
+                const dy = currentY - centerY;
+                const currentAngle = Math.atan2(dy, dx) * 180 / Math.PI;
+                angle = startAngle + (currentAngle - initialAngle);
+                drawWatch();
+            }
+        }
+
+        function handleEnd(e) {
+            e.preventDefault();
+            isDragging = false;
+            isResizing = false;
+            isRotating = false;
+        }
+
+        // Update clock hands every second
+        setInterval(() => {
+            // Update Swiper carousel clocks
+            const slides = document.querySelectorAll('.swiper-slide');
+            slides.forEach(slide => {
+                const hourHand = slide.querySelector('.hour-hand');
+                const minuteHand = slide.querySelector('.minute-hand');
+                const secondHand = slide.querySelector('.second-hand');
+
+                const now = new Date();
+                const hours = now.getHours() % 12;
+                const minutes = now.getMinutes();
+                const seconds = now.getSeconds();
+
+                const hourAngle = (hours * 30) + (minutes / 2);
+                const minuteAngle = (minutes * 6) + (seconds / 10);
+                const secondAngle = seconds * 6;
+
+                hourHand.style.transform = `rotate(${hourAngle}deg)`;
+                minuteHand.style.transform = `rotate(${minuteAngle}deg)`;
+                secondHand.style.transform = `rotate(${secondAngle}deg)`;
+            });
+
+            // Update watch-on-wrist clock
+            drawWatch();
+        }, 1000);
+    </script>
+</body>
+
+</html>
