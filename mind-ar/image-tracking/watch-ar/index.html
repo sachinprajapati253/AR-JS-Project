@@ -211,36 +211,16 @@
             }
         });
 
-        async function initCamera() {
-            statusText.textContent = "Recognising...";
-            try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoDevices = devices.filter(device => device.kind === 'videoinput');
-                const backCam = videoDevices.find(d => d.label.toLowerCase().includes('back')) || videoDevices[0];
+        const camera = new Camera(video, {
+            onFrame: async () => {
+                await pose.send({ image: video });
+            },
+            width: 640,
+            height: 667
+        });
 
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { deviceId: { exact: backCam.deviceId } },
-                    audio: false
-                });
+        camera.start();
 
-                video.srcObject = stream;
-                await video.play();
-
-                async function onFrame() {
-                    if (video.readyState === 4) {
-                        await pose.send({ image: video });
-                    }
-                    requestAnimationFrame(onFrame);
-                }
-                onFrame();
-            } catch (err) {
-                console.error("Camera access error:", err);
-                statusText.textContent = "Camera Error";
-                alert("Failed to access camera. Please ensure permissions are granted.");
-            }
-        }
-
-        initCamera();
     </script>
 </body>
 
