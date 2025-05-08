@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wrist Watch Try-On</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .mainar {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        video,
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .title {
+            position: absolute;
+            top: 1%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            padding: 4px;
+            border-radius: 10px;
+            z-index: 10;
+            width: 80%;
+            max-width: 400px;
+            margin: 10px;
+            text-align: center;
+        }
+
+        .status {
+            position: absolute;
+            top: 15%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 10px;
+            z-index: 10;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        #watch-picker {
+            position: absolute;
+            bottom: 3%;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 10px;
+            z-index: 10;
+        }
+
+        .watch-thumb {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.2s, border 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .watch-thumb:hover,
+        .watch-thumb.selected {
+            transform: scale(1.1);
+            border: 2px solid white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="mainar">
+        <div class="title">
+            <h5>Lift your wrist to experience the virtual watch try-on</h5>
+        </div>
+        <div class="status" id="status-text">Recognising...</div>
+        <video class="input_video" autoplay muted playsinline></video>
+        <canvas class="output_canvas"></canvas>
+        <div id="watch-picker">
+            <img class="watch-thumb selected" src="./assets/watch1.png" data-index="0" onclick="setWatch(0)"
+                alt="Watch 1">
+            <img class="watch-thumb" src="./assets/watch2.png" data-index="1" onclick="setWatch(1)" alt="Watch 2">
+            <img class="watch-thumb" src="./assets/watch3.png" data-index="2" onclick="setWatch(2)" alt="Watch 3">
+            <img class="watch-thumb" src="./assets/watch4.png" data-index="3" onclick="setWatch(3)" alt="Watch 4">
+            <img class="watch-thumb" src="./assets/watch5.png" data-index="4" onclick="setWatch(4)" alt="Watch 5">
+        </div>
+    </div>
+
+    <!-- Load MediaPipe Pose and Camera Utils -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
+    <script>
+        const video = document.querySelector(".input_video");
+        const canvas = document.querySelector(".output_canvas");
+        const ctx = canvas.getContext("2d");
+        const statusText = document.querySelector("#status-text");
+
+        const watches = Array.from({ length: 5 }, (_, i) => {
+            const img = new Image();
+            img.src = `./assets/watch${i + 1}.png`;
+            return img;
+        });
+
+        let currentARWatch = watches[0];
+
+        function setWatch(index) {
+            currentARWatch = watches[index];
+            document.querySelectorAll('.watch-thumb').forEach(thumb => thumb.classList.remove('selected'));
+            document.querySelector(`.watch-thumb[data-index="${index}"]`).classList.add('selected');
+        }
+
+        let lastX = 0, lastY = 0;
+
+        const pose = new Pose({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+        });
+
+        pose.setOptions({
+            modelComplexity: 1,
+            smoothLandmarks: true,
+            enableSegmentation: false,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        pose.onResults((results) => {
+            const videoWidth = video.videoWidth;
+            const videoHeight = video.videoHeight;
+            const aspectRatio = videoWidth / videoHeight;
+            const containerWidth = window.innerWidth;
+            const containerHeight = window.innerHeight;
+            const containerAspectRatio = containerWidth / containerHeight;
+
+            let canvasWidth, canvasHeight;
+            if (containerAspectRatio > aspectRatio) {
+                canvasHeight = containerHeight;
+                canvasWidth = canvasHeight * aspectRatio;
+            } else {
+                canvasWidth = containerWidth;
+                canvasHeight = canvasWidth / aspectRatio;
+            }
+
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+
+            if (results.poseLandmarks) {
+                const landmarks = results.poseLandmarks;
+                const leftWrist = landmarks[15];
+                const leftElbow = landmarks[13];
+                const rightWrist = landmarks[16];
+                const rightElbow = landmarks[14];
+
+                let wrist, elbow;
+                if (leftWrist.visibility > rightWrist.visibility) {
+                    wrist = leftWrist;
+                    elbow = leftElbow;
+                } else {
+                    wrist = rightWrist;
+                    elbow = rightElbow;
+                }
+
+                if (wrist.visibility > 0.5 && elbow.visibility > 0.5) {
+                    statusText.textContent = "Wrist Detected!";
+                    const x = wrist.x * canvas.width;
+                    const y = wrist.y * canvas.height;
+                    const x2 = elbow.x * canvas.width;
+                    const y2 = elbow.y * canvas.height;
+
+                    const angle = Math.atan2(y2 - y, x2 - x);
+                    const dist = Math.hypot(x2 - x, y2 - y);
+
+                    lastX = lastX * 0.9 + x * 0.1;
+                    lastY = lastY * 0.9 + y * 0.1;
+
+                    const size = dist * 0.6;
+                    const offsetX = 0;
+                    const offsetY = 10;
+
+                    // Draw watch if image is loaded
+                    if (currentARWatch.complete) {
+                        ctx.save();
+                        ctx.translate(lastX + offsetX, lastY + offsetY);
+                        ctx.rotate(angle);
+                        ctx.drawImage(currentARWatch, -size / 2, -size / 2.5, size, size);
+                        ctx.restore();
+                    }
+
+                    // Draw red dot at wrist for debugging
+                    ctx.beginPath();
+                    ctx.arc(x, y, 5, 0, 2 * Math.PI);
+                    ctx.fillStyle = 'red';
+                    ctx.fill();
+                } else {
+                    statusText.textContent = "Scanning...";
+                }
+            } else {
+                statusText.textContent = "Scanning...";
+            }
+        });
+
+        const camera = new Camera(video, {
+            onFrame: async () => {
+                await pose.send({ image: video });
+            },
+            width: 640,
+            height: 667,
+            // facingMode: 'environment' // Use rear camera
+        });
+
+        camera.start();
+    </script>
+</body>
+
+</html>
