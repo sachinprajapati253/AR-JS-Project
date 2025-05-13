@@ -138,6 +138,59 @@
             document.querySelector(`.watch-thumb[data-index="${index}"]`).classList.add('selected');
         }
 
+        // Function to draw clock hands on the watch
+        function drawClockHands(ctx, size) {
+            // Draw clock hands
+            const now = new Date();
+            const hours = now.getHours() % 12;
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+
+            const hourAngle = (hours * 30) + (minutes / 2);
+            const minuteAngle = (minutes * 6) + (seconds / 10);
+            const secondAngle = seconds * 6;
+
+            // Hour hand
+            ctx.save();
+            ctx.rotate(hourAngle * Math.PI / 180);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, -size * 0.15); // Shorter hour hand
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = "black";
+            ctx.stroke();
+            ctx.restore();
+
+            // Minute hand
+            ctx.save();
+            ctx.rotate(minuteAngle * Math.PI / 180);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, -size * 0.18); // Medium minute hand
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = "black";
+            ctx.stroke();
+            ctx.restore();
+
+            // Second hand
+            ctx.save();
+            ctx.rotate(secondAngle * Math.PI / 180);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, -size * 0.21); // Longer second hand
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = "red";
+            ctx.stroke();
+            ctx.restore();
+
+            // Center dot
+            ctx.beginPath();
+            ctx.arc(0, 0, 3, 0, 2 * Math.PI);
+            ctx.fillStyle = "black";
+            ctx.fill();
+        }
+
+        // Smoothing variables for wrist position and angle
         let lastX = 0, lastY = 0, lastAngle = 0;
 
         const hands = new Hands({
@@ -213,6 +266,8 @@
                         ctx.translate(lastX, lastY);
                         ctx.rotate(lastAngle);
                         ctx.drawImage(currentARWatch, -watchSize / 2, -watchSize / 2, watchSize, watchSize);
+                        // Draw clock hands on top of the watch
+                        drawClockHands(ctx, watchSize);
                         ctx.restore();
                     }
 
@@ -221,6 +276,7 @@
                     // ctx.arc(x, y, 5, 0, 2 * Math.PI);
                     // ctx.fillStyle = 'red';
                     // ctx.fill();
+
                 } else {
                     statusText.textContent = "Scanning...";
                 }
