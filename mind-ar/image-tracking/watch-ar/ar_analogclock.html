@@ -31,6 +31,10 @@
             object-fit: contain;
         }
 
+        video {
+            display: none;
+        }
+
         canvas {
             width: 100% !important;
             height: 100% !important;
@@ -66,6 +70,25 @@
             text-align: center;
         }
 
+        #start-camera {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        #start-camera:hover {
+            background-color: #45a049;
+        }
+
         #watch-picker {
             position: absolute;
             bottom: 3%;
@@ -99,10 +122,11 @@
 
 <body>
     <div class="mainar">
+        <button id="start-camera">Start Camera</button>
         <div class="title">
             <h5>Lift your wrist to experience the virtual watch try-on</h5>
         </div>
-        <div class="status" id="status-text">Recognising...</div>
+        <div class="status" id="status-text">Click 'Start Camera' to begin.</div>
         <video id="video" autoplay muted playsinline></video>
         <canvas id="canvas"></canvas>
         <div id="watch-picker">
@@ -124,6 +148,7 @@
         const canvas = document.getElementById("canvas");
         const ctx = canvas.getContext("2d");
         const statusText = document.getElementById("status-text");
+        const startButton = document.getElementById("start-camera");
 
         const watches = Array.from({ length: 5 }, (_, i) => {
             const img = new Image();
@@ -291,10 +316,22 @@
             },
             width: 640,
             height: 480,
-            facingMode: 'environment' // Use back camera
+            facingMode: 'environment'
         });
 
-        camera.start();
+        startButton.addEventListener('click', () => {
+            camera.start().then(() => {
+                startButton.style.display = 'none';
+                statusText.textContent = "Recognising...";
+            }).catch(error => {
+                console.error('Failed to start camera:', error);
+                if (error.name === 'NotAllowedError') {
+                    statusText.textContent = 'Camera access denied. Please allow camera permissions.';
+                } else {
+                    statusText.textContent = 'Failed to start camera: ' + error.message;
+                }
+            });
+        });
 
         window.addEventListener('resize', () => {
             // Update canvas size on resize
